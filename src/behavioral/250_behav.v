@@ -1,6 +1,7 @@
 //////////////////////////////////////
 // BEHAVIORAL MODEL DEFINITIONS
 //////////////////////////////////////
+/*
 
 ///////// BASIC LUT /////////
 module lut #(
@@ -151,7 +152,7 @@ module carry_chain #(
 
     generate 
         genvar i
-        for (i = 0, i < INPUTS, i=i+1) begin
+        for (i = 0; i < INPUTS; i=i+1) begin
             carry_chain_single (
                 .P(P[i]),
                 .G(G[i]),
@@ -162,4 +163,5 @@ module carry_chain #(
         end
     endgenerate
 endmodule
+*/
 
