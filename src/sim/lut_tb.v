@@ -5,12 +5,13 @@ module lut_tb;
     parameter CLK_PERIOD = 10;
     parameter LUT_NINPUTS = 4;
     parameter CONFIG_WIDTH = 1;
+    parameter NUM_TESTS = 4;
     
     
     localparam LUT_MEM_SIZE = 2 ** LUT_NINPUTS;
     localparam HALF_CYCLE = CLK_PERIOD / 2;
     localparam LOADING_CYCLES = LUT_MEM_SIZE / CONFIG_WIDTH;
-    localparam CFG_SIZE = LUT_MEM_SIZE*NUM_LUTS;
+    localparam CFG_SIZE = LUT_MEM_SIZE * NUM_LUTS;
 
     // Configure number of LUTs here
     localparam NUM_LUTS = 1;
@@ -116,8 +117,7 @@ module lut_tb;
     end
 
 
-    localparam testcases = 4;
-    reg [(LUT_MEM_SIZE + LUT_NINPUTS + 1) * NUM_LUTS-1:0] testvector [0:testcases-1];
+    reg [(LUT_MEM_SIZE + LUT_NINPUTS + 1) * NUM_LUTS-1:0] testvector [0:NUM_TESTS-1];
     integer i;
 
     reg [CFG_SIZE-1:0] cfg_vec;
@@ -129,13 +129,13 @@ module lut_tb;
         $dumpfile("LUT_TB0.vcd");
         $dumpvars(0, LUT0);
         $dumpon;
-        $readmemb("../tests/lut_tests0.input", testvector);
+        $readmemb("../vectors/sanity0.input", testvector);
         running = 0;
         current_test_id = 0;
         // Set initial state
         repeat (2) @(negedge clk);
         running = 1;
-        for (i = 0;  i < testcases; i = i + 1) begin
+        for (i = 0;  i < NUM_TESTS; i = i + 1) begin
             // set lut CFG_EN to high
             cfg_en = {NUM_LUTS{1'b1}};
 
