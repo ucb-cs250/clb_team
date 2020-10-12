@@ -117,13 +117,16 @@ module lut_tb;
     end
 
 
-    reg [(LUT_MEM_SIZE + LUT_NINPUTS + 1) * NUM_LUTS-1:0] testvector [0:NUM_TESTS-1];
+    reg [(LUT_MEM_SIZE + LUT_NINPUTS + 1) * NUM_LUTS:0] testvector [0:NUM_TESTS-1];
     integer i;
 
     reg [CFG_SIZE-1:0] cfg_vec;
 
     localparam INPUTS_START = CFG_SIZE;
     localparam OUTPUTS_START = LUT_NINPUTS * NUM_LUTS + INPUTS_START;
+    localparam RELOAD_LOC = (LUT_MEM_SIZE + LUT_NINPUTS + 1) * NUM_LUTS - 1;
+
+    reg reload;
 
     initial begin
         $dumpfile("LUT_TB0.vcd");
@@ -135,13 +138,18 @@ module lut_tb;
         // Set initial state
         repeat (2) @(negedge clk);
         running = 1;
+        reload = 0;
         for (i = 0;  i < NUM_TESTS; i = i + 1) begin
-            // set lut CFG_EN to high
-            cfg_en = {NUM_LUTS{1'b1}};
 
-            // load full configuration vector
-            cfg_vec = testvector[i][CFG_SIZE-1:0];
-            loadLUTs(cfg_vec);
+            // load or reload LUTs if desired
+            reload = testvector[i][RELOAD_LOC];
+            if (reload) begin
+                // set lut CFG_EN to high
+                cfg_en = {NUM_LUTS{1'b1}};
+                // load full configuration vector
+                cfg_vec = testvector[i][CFG_SIZE-1:0];
+                loadLUTs(cfg_vec);
+            end
 
             // load LUT inputs
             cfg_en = {NUM_LUTS{1'b0}};
