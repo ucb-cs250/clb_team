@@ -3,7 +3,7 @@
 //  MEM_SIZE is a multiple of CONFIG_WIDTH 
 
 module lut #(
-    parameter INPUTS=4, MEM_SIZE=2^NUM_INPUTS, CONFIG_WIDTH=8
+    parameter INPUTS=4, MEM_SIZE=2^INPUTS, CONFIG_WIDTH=8
 ) (
     // IO
     input [INPUTS-1:0] addr, 
@@ -14,13 +14,13 @@ module lut #(
     input config_en,
     input [CONFIG_WIDTH-1:0] config_in,
     output [CONFIG_WIDTH-1:0] config_out
-)
+);
 reg [MEM_SIZE-1:0] mem = 0;
 assign out = mem[addr];
 
 // Stream Style Configuration Logic
 generate 
-    genvar i
+    genvar i;
     for (i=1; i<(MEM_SIZE/CONFIG_WIDTH); i=i+1) begin
         always @(posedge config_clk) begin
             if (config_en)
