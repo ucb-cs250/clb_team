@@ -7,7 +7,7 @@ module lut_fractured #(
     input  [INPUTS-1:0] addr,
     output [OUTPUTS-1:0] out,
 
-    // Stream Style Configuration
+    // Block Style Configuration
     input config_clk,
     input config_en,
     input [MEM_SIZE-1:0] config_in
