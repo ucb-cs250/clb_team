@@ -14,14 +14,14 @@ module lut #(
     input config_en,
     input [MEM_SIZE-1:0] config_in
 );
-reg [MEM_SIZE-1:0] mem = 0;
-assign out = mem[addr];
 
-// Block Style Configuration Logic
-always @(posedge config_clk) begin
-    if (config_en) begin
-        mem <= config_in;
-    end
-end
+block_config_sram #(.ADDR_BITS(INPUTS)) sram0 (
+    .addr(addr), 
+    .out(out),
+    .config_clk(config_clk),
+    .config_en(config_en),
+    .config_in(config_in)
+);
+
 endmodule
 
