@@ -1,16 +1,16 @@
 `timescale 1ns/1ps
 
+`include "../behavioral/lut.v"
+
 module lut_tb;
 
     parameter CLK_PERIOD = 10;
     parameter LUT_NINPUTS = 4;
-    parameter CONFIG_WIDTH = 1;
     parameter NUM_TESTS = 4;
     
     
     localparam LUT_MEM_SIZE = 2 ** LUT_NINPUTS;
     localparam HALF_CYCLE = CLK_PERIOD / 2;
-    localparam LOADING_CYCLES = LUT_MEM_SIZE / CONFIG_WIDTH;
     localparam CFG_SIZE = LUT_MEM_SIZE * NUM_LUTS;
 
     // Configure number of LUTs here
@@ -45,20 +45,6 @@ module lut_tb;
         end
     endtask
 
-    // Load LUT/LUTS under testing
-    // CFG enable bits must be set before function.
-    // Initial LUT must have input init_cfg_vec
-    task loadLUTs;
-        input [CONFIG_WIDTH-1:0] config_bits [NUM_LUTS*LOADING_CYCLES-1:0];
-        integer j;
-        begin
-            for (j = 0; j < NUM_LUTS*LOADING_CYCLES-1) begin
-                init_cfg_vec = config_bits[j];
-                @(posedge clk);
-            end
-        end
-    endtask
-
     // LUT I/O declared here:
     reg [LUT_NINPUTS-1:0] lut_addr [NUM_LUTS-1:0];
 
@@ -67,8 +53,7 @@ module lut_tb;
 
     reg cfg_en [NUM_LUTS-1:0];
 
-    wire [CONFIG_WIDTH-1:0] lut_cfg_chain [NUM_LUTS:0];
-    assign lut_cfg_chain[0] = init_cfg_vec;
+    reg [LUT_MEM_SIZE-1:0] lut_cfg_chain [NUM_LUTS-1:0];
 
 
     // MODULES TO TEST
@@ -77,18 +62,30 @@ module lut_tb;
         for (k = 0; k < NUM_LUTS; k = k + 1) begin
             lut #(
                 .INPUTS(LUT_NINPUTS), 
-                .MEM_SIZE=(LUT_MEM_SIZE), 
-                .CONFIG_WIDTH(CONFIG_WIDTH)
+                .MEM_SIZE=(LUT_MEM_SIZE)
             ) DUT (
                 .addr(lut_addr[k]),
                 .out(lut_out[k]),
                 .config_clk(clk),
                 .config_en(cfg_en[k]),
-                .config_in(lut_cfg_chain[k]),
-                .config_out(lut_cfg_chain[k+1])
+                .config_in(lut_cfg_chain[k])
             );
         end
     endgenerate
+
+    // Load LUT/LUTS under testing
+    // CFG enable bits must be set before function.
+    // Initial LUT must have input init_cfg_vec
+    task loadLUTs;
+        input [LUT_MEM_SIZE-1:0] config_bits [NUM_LUTS-1:0];
+        integer j;
+        begin
+            for (j = 0; j < NUM_LUTS-1) begin
+                lut_cfg_chain[j] = config_bits[j];
+            end
+        end
+        @posedge clk;
+    endtask
    
 
     wire [31:0] timeout_cycle = TIMEOUT;
