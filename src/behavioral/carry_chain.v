@@ -24,7 +24,7 @@ module carry_chain #(
     assign C[0] = Ci;
 
     generate 
-        genvar i
+        genvar i;
         for (i = 0; i < INPUTS; i=i+1) begin
             carry_chain_single (
                 .P(P[i]),
@@ -32,7 +32,7 @@ module carry_chain #(
                 .S(S[i]),
                 .Ci(C[i]),
                 .Co(C[i+1]),
-            )
+            );
         end
     endgenerate
 endmodule

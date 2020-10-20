@@ -1,4 +1,5 @@
 ///////// GENERIC FRACTURED LUT /////////
+// outputs: {N-LUT_OUT,{FRAC_LVL_OUT}} //
 
 module lut_fractured #(
     parameter INPUTS=4, FRACTURING=1, MEM_SIZE=2**INPUTS,
@@ -14,8 +15,6 @@ module lut_fractured #(
 );
 
 wire [SUBOUTPUTS-1:0] upper_out, lower_out;
-assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : lower_out[SUBOUTPUTS-1], 
-                upper_out, lower_out};
 
 localparam HALF_MEM_SIZE = MEM_SIZE / 2;
 
@@ -40,6 +39,9 @@ generate
             .config_en(config_en),
             .config_in(HALF_MEM_SIZE-1:0)
         );
+        assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 
+                                       lower_out[SUBOUTPUTS-1], 
+                upper_out, lower_out};
     end else begin
         lut_fractured #(
             .INPUTS(INPUTS-1),
@@ -61,6 +63,10 @@ generate
             .config_clk(config_clk),
             .config_en(HALF_MEM_SIZE-1:0)
         );
+
+        assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 
+                                       lower_out[SUBOUTPUTS-1], 
+                upper_out[SUBOUTPUTS-2:0], lower_out[SUBOUTPUTS-2:0]};
     end
 endgenerate
 

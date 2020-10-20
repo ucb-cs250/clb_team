@@ -25,7 +25,7 @@ end
 
 lut #(.INPUTS(INPUTS)) first_lut (
     .addr(addr[INPUTS*2-1:INPUTS]),
-    .out(out[1]),
+    .out(out[0]),
     .config_clk(config_clk),
     .config_en(config_en),
     .config_in(config_in[2*MEM_SIZE-1:MEM_SIZE])
@@ -33,7 +33,7 @@ lut #(.INPUTS(INPUTS)) first_lut (
 
 lut #(.INPUTS(INPUTS)) second_lut (
     .addr({second_in, addr[INPUTS-2:0]}),
-    .out(out[0]),
+    .out(out[1]),
     .config_clk(config_clk),
     .config_en(config_en),
     .config_in(config_in[MEM_SIZE-1:0])
