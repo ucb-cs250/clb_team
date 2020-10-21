@@ -23,5 +23,9 @@ block_config_sram #(.ADDR_BITS(INPUTS)) sram0 (
     .config_in(config_in)
 );
 
+always @(*) begin
+    $display("[%0t] Model running \n", $time);
+end
+
 endmodule
 
