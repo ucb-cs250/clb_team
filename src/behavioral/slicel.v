@@ -44,11 +44,11 @@ generate
             .config_in(luts_config_in[i])
         );
 
-        cc_p[i] = luts_out[i][1];
-        cc_g[i] = luts_out[i][0];
+        cc_p[i] = luts_out[i][0];
+        cc_g[i] = luts_out[i][1];
 
         assign out[i] = use_cc ? 
-                        {luts_out[i][1], cc_s[i]} :
+                        {cc_s[i], luts_out[i][0]} :
                         luts_out[i]; // more config for this?
         // Registers capture main LUT outputs
         always @(posedge clk) begin

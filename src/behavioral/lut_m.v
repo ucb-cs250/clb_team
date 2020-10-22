@@ -14,21 +14,20 @@ module lut_m #(
     input cen,
     input [MEM_SIZE-1:0] config_in,
 
-    // Single-bit Write
+    // Single-bit, single-port Write
     input data_in,
     input write_en,
-    // Dual-Port Write
-    input [INPUTS-1:0] waddr
 );
 
-bit_writable_sram #(.ADDR_BITS(INPUTS)) sram0 (
+bit_writable_latches #(.ADDR_BITS(INPUTS)) latches0 (
     .addr(addr), 
     .out(out),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in),
     .data_in(data_in),
-    .write_en(write_en)
+    .write_en(write_en),
+    .waddr(addr)
 );
 
 endmodule

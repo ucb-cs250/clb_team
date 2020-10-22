@@ -1,4 +1,8 @@
-module block_config_sram #(
+/* 
+ * Block of latches for use of SLICEL
+ * This exists to make it easier to swap in a custom config of latches
+ */
+module block_config_latches #(
     parameter ADDR_BITS=4, MEM_SIZE=2**ADDR_BITS
 ) (
     // IO

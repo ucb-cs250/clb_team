@@ -15,7 +15,7 @@ module lut #(
     input [MEM_SIZE-1:0] config_in
 );
 
-block_config_sram #(.ADDR_BITS(INPUTS)) sram0 (
+block_config_latches #(.ADDR_BITS(INPUTS)) latches0 (
     .addr(addr), 
     .out(out),
     .cclk(cclk),

@@ -13,13 +13,15 @@ module slice_fcarry #(
     input [2*S_XX_BASE-1:0] luts_in [NUM_LUTS-1:0],
     input [2*CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
     input config_use_cc,
+    input [NUM_LUTS-2:0] inter_lut_mux_config,
     input cclk,
     input clk,
     input reg_ce,
     input cen,
     input Ci,
     output Co,
-    output [OUTPUTS-1:0] out [NUM_LUTS-1:0],
+    output [1:0] primary_out [NUM_LUTS-1:0],
+    output [OUTPUTS-1:0] carry_chain_out [NUM_LUTS-1:0],
     output reg [1:0] sync_out [NUM_LUTS-1:0]
 );
 
@@ -53,9 +55,8 @@ generate
             cc_p[i][j] = luts_out[i][2*j];
             cc_g[i][j] = luts_out[i][2*j+1];
         end
-        assign out[i] = use_cc ? 
-                        {luts_out[i][2*OUTPUTS+1:2*OUTPUTS-1], cc_s[i]} :
-                        luts_out[i];
+        assign primary_out[i] = luts_out[i][2*OUTPUTS+1:2*OUTPUTS];
+        assign carry_chain_out[i] = cc_s[i]; // Do we want to pass on fractured output too/instead?
         // Registers capture main LUT outputs
         always @(posedge clk) begin
             if (reg_ce) begin
@@ -74,6 +75,19 @@ carry_chain #(.INPUTS(NUM_LUTS*CC_INPUTS)) cc (
     .Ci(Ci),
     .Co(Co)
 );
+
+// MUX the primary S44 outputs, analogue to MUX7 and MUX8
+localparam MUX_LVLS = $clog2(NUM_LUTS); // assume NUM_LUTS is a power of 2
+generate
+    genvar levels;
+    genvar muxes;
+    for (levels = 1; levels <= NUM_LUTS; levels=levels+1) begin
+        for (muxes = 0; muxes < levels; muxes=muxes+1) begin
+            inter_lut_mux_config
+        end
+    end
+endgenerate
+
 
 
 endmodule

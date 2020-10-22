@@ -1,7 +1,7 @@
 ///////// CARRY CHAIN /////////
 
 module carry_chain_single (
-        input P, G, Ci
+        input P, G, Ci,
         output Co, S
     );
 
@@ -14,13 +14,13 @@ module carry_chain #(
     ) (
         input  [INPUTS-1:0] P,
         input  [INPUTS-1:0] G,
-        output [INPUTS-1:0] S
+        output [INPUTS-1:0] S,
         input  Ci,
         output Co
     );
 
     wire [INPUTS:0] C;
-    assign Co = C[INPUTS]
+    assign Co = C[INPUTS];
     assign C[0] = Ci;
 
     generate 
@@ -31,7 +31,7 @@ module carry_chain #(
                 .G(G[i]),
                 .S(S[i]),
                 .Ci(C[i]),
-                .Co(C[i+1]),
+                .Co(C[i+1])
             );
         end
     endgenerate

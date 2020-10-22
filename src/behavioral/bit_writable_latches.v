@@ -1,4 +1,8 @@
-module bit_writable_sram #(
+/* 
+ * Block of latches for use of SLICEM
+ * This exists to make it easier to swap in a custom config of latches
+ */
+module bit_writable_latches #(
     parameter ADDR_BITS=4, MEM_SIZE=2**ADDR_BITS
 ) (
     // IO
