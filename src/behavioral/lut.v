@@ -10,16 +10,16 @@ module lut #(
     output out,
 
     // Block Style Configuration
-    input config_clk,
-    input config_en,
+    input cclk,
+    input cen,
     input [MEM_SIZE-1:0] config_in
 );
 
 block_config_sram #(.ADDR_BITS(INPUTS)) sram0 (
     .addr(addr), 
     .out(out),
-    .config_clk(config_clk),
-    .config_en(config_en),
+    .cclk(cclk),
+    .cen(cen),
     .config_in(config_in)
 );
 

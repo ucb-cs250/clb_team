@@ -1,6 +1,7 @@
 // Standard Logic Slice //
 
 // TODO: support muxing of LUT outputs
+// like MUX7 and MUX8
 
 module slicel #(
     parameter S_XX_BASE=4, CFG_SIZE=2**S_XX_BASE+1,
@@ -9,10 +10,10 @@ module slicel #(
     input [2*S_XX_BASE-1:0] luts_in [NUM_LUTS-1:0],
     input [2*CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
     input config_use_cc,
-    input config_clk,
-    input register_clk,
+    input cclk,
+    input clk,
     input reg_ce,
-    input config_en,
+    input cen,
     input Ci,
     output Co,
     output [1:0] out [NUM_LUTS-1:0],
@@ -25,8 +26,8 @@ wire [NUM_LUTS-1:0] cc_g;
 wire [NUM_LUTS-1:0] cc_s;
 
 wire use_cc;
-always @(posedge config_clk) begin
-    if (config_en) begin
+always @(posedge cclk) begin
+    if (cen) begin
         use_cc <= config_use_cc;
     end
 end
@@ -38,8 +39,8 @@ generate
         lut_sXX_softcode #(.INPUTS(S_XX_BASE)) (
             .addr(luts_in[i]),
             .out(luts_out[i]),
-            .config_clk(config_clk),
-            .config_en(config_en),
+            .cclk(cclk),
+            .cen(cen),
             .config_in(luts_config_in[i])
         );
 
@@ -50,7 +51,7 @@ generate
                         {luts_out[i][1], cc_s[i]} :
                         luts_out[i]; // more config for this?
         // Registers capture main LUT outputs
-        always @(posedge register_clk) begin
+        always @(posedge clk) begin
             if (reg_ce) begin
                 sync_out[i] <= luts_out[i];
             end

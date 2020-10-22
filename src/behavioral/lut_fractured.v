@@ -9,8 +9,8 @@ module lut_fractured #(
     output [OUTPUTS-1:0] out,
 
     // Block Style Configuration
-    input config_clk,
-    input config_en,
+    input cclk,
+    input cen,
     input [MEM_SIZE-1:0] config_in
 );
 
@@ -25,8 +25,8 @@ generate
         ) upper_lut (
             .addr(addr[INPUTS-2:0]),
             .out(upper_out),
-            .config_clk(config_clk),
-            .config_en(config_en),
+            .cclk(cclk),
+            .cen(cen),
             .config_in(MEM_SIZE-1:HALF_MEM_SIZE)
         );
 
@@ -35,8 +35,8 @@ generate
         ) lower_lut (
             .addr(addr[INPUTS-2:0]),
             .out(lower_out),
-            .config_clk(config_clk),
-            .config_en(config_en),
+            .cclk(cclk),
+            .cen(cen),
             .config_in(HALF_MEM_SIZE-1:0)
         );
         assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 
@@ -49,8 +49,8 @@ generate
         ) upper_lut (
             .addr(addr[INPUTS-2:0]),
             .out(upper_out),
-            .config_clk(config_clk),
-            .config_en(config_en),
+            .cclk(cclk),
+            .cen(cen),
             .config_in(MEM_SIZE-1:HALF_MEM_SIZE)
         );
 
@@ -60,8 +60,8 @@ generate
         ) lower_lut (
             .addr(addr[INPUTS-2:0]),
             .out(lower_out),
-            .config_clk(config_clk),
-            .config_en(HALF_MEM_SIZE-1:0)
+            .cclk(cclk),
+            .cen(HALF_MEM_SIZE-1:0)
         );
 
         assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 

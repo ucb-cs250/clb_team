@@ -6,8 +6,8 @@ module bit_writable_sram #(
     output out,
 
     // Block Style Configuration
-    input config_clk,
-    input config_en,
+    input cclk,
+    input cen,
     input [MEM_SIZE-1:0] config_in,
 
     // Single-bit Write
@@ -21,8 +21,8 @@ reg [MEM_SIZE-1:0] mem = 0;
 assign out = mem[addr];
 
 // Block Style Configuration Logic
-always @(posedge config_clk) begin
-    if (config_en) begin
+always @(posedge cclk) begin
+    if (cen) begin
         mem <= config_in;
     end else if (write_en) begin
         mem[waddr] <= data_in;

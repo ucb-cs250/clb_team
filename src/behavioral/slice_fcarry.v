@@ -2,6 +2,7 @@
 // Uses Fracturable S_XX LUTs //
 
 // TODO: support muxing of LUT outputs
+// like MUX7 and MUX8
 
 module slice_fcarry #(
     parameter S_XX_BASE=4, CFG_SIZE=2**S_XX_BASE+1,
@@ -10,12 +11,12 @@ module slice_fcarry #(
     parameter NUM_LUTS = 4
 ) (
     input [2*S_XX_BASE-1:0] luts_in [NUM_LUTS-1:0],
-    input [CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
+    input [2*CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
     input config_use_cc,
-    input config_clk,
-    input register_clk,
+    input cclk,
+    input clk,
     input reg_ce,
-    input config_en,
+    input cen,
     input Ci,
     output Co,
     output [OUTPUTS-1:0] out [NUM_LUTS-1:0],
@@ -30,8 +31,8 @@ wire [CC_INPUTS-1:0] cc_g [NUM_LUTS-1:0];
 wire [CC_INPUTS-1:0] cc_s [NUM_LUTS-1:0];
 
 wire use_cc;
-always @(posedge config_clk) begin
-    if (config_en) begin
+always @(posedge cclk) begin
+    if (cen) begin
         use_cc <= config_use_cc;
     end
 end
@@ -44,8 +45,8 @@ generate
         lut_sXX_frac #(.INPUTS(S_XX_BASE), .FRACTURING(FRACTURE_LEVEL)) (
             .addr(luts_in[i]),
             .out(luts_out[i]),
-            .config_clk(config_clk),
-            .config_en(config_en),
+            .cclk(cclk),
+            .cen(cen),
             .config_in(luts_config_in[i])
         );
         for (j = 0; j < OUTPUTS; j = j + 1) begin
@@ -56,7 +57,7 @@ generate
                         {luts_out[i][2*OUTPUTS+1:2*OUTPUTS-1], cc_s[i]} :
                         luts_out[i];
         // Registers capture main LUT outputs
-        always @(posedge register_clk) begin
+        always @(posedge clk) begin
             if (reg_ce) begin
                 sync_out[i] <= luts_out[i][2*OUTPUTS+1:2*OUTPUTS-1];
             end

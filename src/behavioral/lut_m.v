@@ -10,8 +10,8 @@ module lut_m #(
     output out,
 
     // Block Style Configuration
-    input config_clk,
-    input config_en,
+    input cclk,
+    input cen,
     input [MEM_SIZE-1:0] config_in,
 
     // Single-bit Write
@@ -24,8 +24,8 @@ module lut_m #(
 bit_writable_sram #(.ADDR_BITS(INPUTS)) sram0 (
     .addr(addr), 
     .out(out),
-    .config_clk(config_clk),
-    .config_en(config_en),
+    .cclk(cclk),
+    .cen(cen),
     .config_in(config_in),
     .data_in(data_in),
     .write_en(write_en)
