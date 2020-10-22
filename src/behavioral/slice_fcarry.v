@@ -6,14 +6,15 @@
 
 module slice_fcarry #(
     parameter S_XX_BASE=4, CFG_SIZE=2**S_XX_BASE+1,
-    parameter FRACTURE_LEVEL = 2,
+    parameter FRACTURE_LEVEL = 2, 
     parameter OUTPUTS=2**(FRACTURE_LEVEL),
-    parameter NUM_LUTS = 4
+    parameter NUM_LUTS = 4, MUX_LVLS = $clog2(NUM_LUTS) // assume NUM_LUTS is a power of 2
 ) (
     input [2*S_XX_BASE-1:0] luts_in [NUM_LUTS-1:0],
+    input [MUX_LVLS-1:0] higher_order_addr,
     input [2*CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
     input config_use_cc,
-    input [NUM_LUTS-2:0] inter_lut_mux_config,
+    input [MUX_LVLS-1:0] inter_lut_mux_config,
     input cclk,
     input clk,
     input reg_ce,
@@ -31,8 +32,12 @@ wire [2*OUTPUTS+1:0] luts_out [NUM_LUTS-1:0];
 wire [CC_INPUTS-1:0] cc_p [NUM_LUTS-1:0];
 wire [CC_INPUTS-1:0] cc_g [NUM_LUTS-1:0];
 wire [CC_INPUTS-1:0] cc_s [NUM_LUTS-1:0];
+wire [NUM_LUTS-2:0] f_mux_intermediate;
+wire main_luts_out [NUM_LUTS-1:0];
+wire secondary_luts_out [NUM_LUTS-1:0];
+wire muxes_out [NUM_LUTS-1:0];
 
-wire use_cc;
+reg use_cc;
 always @(posedge cclk) begin
     if (cen) begin
         use_cc <= config_use_cc;
@@ -55,7 +60,9 @@ generate
             cc_p[i][j] = luts_out[i][2*j];
             cc_g[i][j] = luts_out[i][2*j+1];
         end
-        assign primary_out[i] = luts_out[i][2*OUTPUTS+1:2*OUTPUTS];
+        assign main_luts_out[i] = luts_out[i][2*OUTPUTS+1];
+        assign secondary_luts_out[i] = luts_out[i][2*OUTPUTS];
+        assign primary_out[i] = {muxes_out[i], secondary_luts_out[i]};
         assign carry_chain_out[i] = cc_s[i]; // Do we want to pass on fractured output too/instead?
         // Registers capture main LUT outputs
         always @(posedge clk) begin
@@ -76,18 +83,16 @@ carry_chain #(.INPUTS(NUM_LUTS*CC_INPUTS)) cc (
     .Co(Co)
 );
 
-// MUX the primary S44 outputs, analogue to MUX7 and MUX8
-localparam MUX_LVLS = $clog2(NUM_LUTS); // assume NUM_LUTS is a power of 2
-generate
-    genvar levels;
-    genvar muxes;
-    for (levels = 1; levels <= NUM_LUTS; levels=levels+1) begin
-        for (muxes = 0; muxes < levels; muxes=muxes+1) begin
-            inter_lut_mux_config
-        end
-    end
-endgenerate
-
-
+// MUX the primary S44 outputs, analog to MUX7 and MUX8
+mux_f_slice #(
+    .NUM_LUTS(NUM_LUTS), .MUX_LEVEL(MUX_LVLS)
+) muxes (
+    .luts_out(muxes_out);
+    .addr(higher_order_addr),
+    .out(main_luts_out),
+    .cclk(cclk),
+    .cen(cen),
+    .config_in(inter_lut_mux_config)
+);
 
 endmodule
