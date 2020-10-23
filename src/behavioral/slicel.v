@@ -1,8 +1,5 @@
 // Standard Logic Slice //
 
-// TODO: support muxing of LUT outputs
-// like MUX7 and MUX8
-
 module slicel #(
     parameter S_XX_BASE=4, CFG_SIZE=2**S_XX_BASE+1,
     parameter NUM_LUTS = 4, MUX_LVLS = $clog2(NUM_LUTS) // assume NUM_LUTS is a power of 2
