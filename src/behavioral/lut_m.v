@@ -9,6 +9,9 @@ module lut_m #(
     input [INPUTS-1:0] addr, 
     output out,
 
+    // user-write clock
+    input clk,
+
     // Block Style Configuration
     input cclk,
     input cen,
@@ -22,6 +25,7 @@ module lut_m #(
 bit_writable_latches #(.ADDR_BITS(INPUTS)) latches0 (
     .addr(addr), 
     .out(out),
+    .clk(clk),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in),

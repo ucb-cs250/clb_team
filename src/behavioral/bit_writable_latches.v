@@ -9,6 +9,9 @@ module bit_writable_latches #(
     input [ADDR_BITS-1:0] addr, 
     output out,
 
+    // user-write clock
+    input clk,
+
     // Block Style Configuration
     input cclk,
     input cen,
@@ -28,7 +31,11 @@ assign out = mem[addr];
 always @(posedge cclk) begin
     if (cen) begin
         mem <= config_in;
-    end else if (write_en) begin
+    end 
+end
+
+always @(posedge clk) begin
+    if (write_en & (~cen)) begin
         mem[waddr] <= data_in;
     end
 end

@@ -52,6 +52,7 @@ generate
         lut_sXX_m #(.INPUTS(S_XX_BASE)) (
             .addr(luts_in[i]),
             .out(luts_out[i]),
+            .clk(clk),
             .cclk(cclk),
             .cen(cen),
             .config_in(luts_config_in[i])
