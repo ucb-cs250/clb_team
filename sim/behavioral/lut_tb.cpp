@@ -13,18 +13,16 @@ double sc_time_stamp() {
 }
 
 void tick(Vlut* lut) {
-    //lut->clk = 1;
     lut->eval();
     main_time++;
-    lut->config_clk = 1;
+    lut->cclk = 1;
     lut->eval();
     if (tfp) tfp->dump(main_time);
 }
 void tock(Vlut* lut) {
-    //lut->clk = 0;
     lut->eval();
     main_time++;
-    lut->config_clk = 0;
+    lut->cclk = 0;
     lut->eval();
     if (tfp) tfp->dump(main_time);
 }
@@ -58,7 +56,7 @@ int main(int argc, char** argv, char** env) {
     // Main Test
 
     // Reset
-    lut->config_clk=0;
+    lut->cclk=0;
     lut->addr = 0;
     lut->eval();
 
@@ -89,9 +87,9 @@ int main(int argc, char** argv, char** env) {
     VL_PRINTF("din: %x\n", temp);
 #endif
 
-    lut->config_en = 1;
+    lut->cen= 1;
     ticktock(lut);
-    lut->config_en = 0;
+    lut->cen= 0;
     ticktock(lut);
     lut->eval();
 

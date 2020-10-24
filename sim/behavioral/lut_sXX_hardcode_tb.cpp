@@ -1,10 +1,14 @@
+#define DUT Vlut_sXX_hardcode
+#define LUT_ASIZE 4
+#define LUT_MSIZE 16
+#define LUT_FMASK 0b1111111
+#define LUT_LMASK 0b1111
+
 #include <verilated.h>
-#include "Vlut.h"
+#include "Vlut_sXX_hardcode.h"
 #if VM_TRACE
 # include <verilated_vcd_c.h>
 #endif
-
-#define LUT_SIZE 16
 
 VerilatedVcdC* tfp = NULL;
 vluint64_t main_time = 0;
@@ -12,69 +16,99 @@ double sc_time_stamp() {
     return main_time;  // $time
 }
 
-void tick(Vlut_sXX_hardcode* lut) {
-    //lut->clk = 1;
-    lut->eval();
-    main_time++;
-    lut->config_clk = 1;
-    lut->eval();
-    if (tfp) tfp->dump(main_time);
-}
-void tock(Vlut_sXX_hardcode* lut) {
-    //lut->clk = 0;
-    lut->eval();
-    main_time++;
-    lut->config_clk = 0;
-    lut->eval();
-    if (tfp) tfp->dump(main_time);
-}
-void ticktock(Vlut_sXX_hardcode* lut) {
-    tick(lut);
-    tock(lut);
-}
-
 class lut_s44 {
     public :
-        int lut_size;
-        int lut_mask;
-        int *upper_config;
-        int *lower_config;
-        Vlut_sXX_hardcode* lut;
+        int config;
+        char *upper_config;
+        char *lower_config;
+        DUT* lut;
+        
+        lut_s44(DUT* _lut) {
+            int temp;
+            temp = config = rand();
+            upper_config = (char *) malloc(sizeof(char) * LUT_MSIZE);
+            lower_config = (char *) malloc(sizeof(char) * LUT_MSIZE);
+            lut = _lut;
 
-        lut_s44(int size, Vlut_sXX_hardcode* lut) {
-            int config = rand();
-            lut_size = size;
-            lut_mask = 0;
-            upper_config = malloc(sizeof(int) * size);
-            lower_config = malloc(sizeof(int) * size);
-            for (int i=0; i<lut_size; ++i) {
-                lut_mask = (lut_mask << 1) | 1;
-                upper_config[i] = rand() & 1;
-                lower_config[i] = rand() & 1;
+            for (int i=0; i<LUT_MSIZE; ++i) {
+                lower_config[i] = temp & 1;
+                temp = temp >> 1;
             }
-        }
 
+            for (int i=0; i<LUT_MSIZE; ++i) {
+                upper_config[i] = temp & 1;
+                temp = temp >> 1;
+            }
+
+        }
+        
+        int test_lut(int iterations) {
+            int addr, data_exp, data_dut, errors = 0;
+            lut_configure();
+            for (int i=0; i<iterations; ++i) {
+                addr = rand() & LUT_FMASK;
+                data_exp = fetch(addr);
+                data_dut = lut_fetch(addr);
+                if (data_exp != data_dut) {
+                    ++errors;
+                    printf("Errors: Expected %d Got %d\n", data_exp, data_dut);
+                }
+            }
+            if (errors)
+                printf("FAILED: %d/%d\n", errors, iterations);
+            else
+                printf("SUCCESS: TEST PASSED\n");
+            return errors;
+        }
+            
         int fetch(int addr) { // 1111 111
-            int upper_addr = (addr >> (lut_size-1)) & lut_mask; 
-            int lower_addr = (addr & (lut_mask >> 1));
-            lower_addr |= (upper_config[upper_addr] << (lut_size - 1));
+            int upper_addr = (addr >> (LUT_ASIZE-1)) & LUT_LMASK; 
+            int lower_addr = (addr & (LUT_LMASK >> 1));
+            lower_addr |= (upper_config[upper_addr] << (LUT_ASIZE - 1));
             return lower_config[lower_addr];
         }
 
-        int configure(Vlut_sXX_hardcode *lut) {
-            lut->config_en = config;
-            
+        int lut_fetch(int addr) {
+            lut->addr = addr;
+            lut->eval();
+            return lut->out;
         }
-}
+        
+        void lut_configure() {
+            lut->cen = 1;
+            lut->config_in = config; 
+            ticktock();
+            lut->cen = 0;
+        }
+
+    private :
+        void tick() {
+            lut->eval();
+            main_time++;
+            lut->cclk = 1;
+            lut->eval();
+            if (tfp) tfp->dump(main_time);
+        }
+        void tock() {
+            lut->eval();
+            main_time++;
+            lut->cclk = 0;
+            lut->eval();
+            if (tfp) tfp->dump(main_time);
+        }
+        void ticktock() {
+            tick();
+            tock();
+        }
+};
 
 int main(int argc, char** argv, char** env) {
     if (0 && argc && argv && env) {}
     Verilated::debug(0);
-    //Verilated::randReset(5); // randomly init all registers
-    Verilated::randReset(2); // randomly init all registers
+    Verilated::randReset(5); // randomly init all registers
     Verilated::commandArgs(argc, argv);
 
-    Vlut* lut = new Vlut;  
+    DUT* lut = new DUT;  
 
 #if VM_TRACE
     tfp = NULL;
@@ -90,75 +124,8 @@ int main(int argc, char** argv, char** env) {
 #endif
 
     // Main Test
-
-    // Reset
-    lut->config_clk=0;
-    lut->addr = 0;
-    lut->eval();
-
-    ticktock(lut);
-
-    // Generate lut configuration
-    int lut_data[LUT_SIZE] = {};
-
-    for (int i=0; i<LUT_SIZE; i++)
-        lut_data[i] = rand() & 1;
-
-    // Load lut configuration
-    int temp;
-#if LUT_SIZE > 64
-    int k = 0;
-    for (int i=0; i<LUT_SIZE; i+=32) {
-        temp = 0;
-        for (int j=i; j<i+32 and j<LUT_SIZE; j+=1) temp |= lut_data[j] << (j - i);
-        lut->config_in[k++] = temp;
-    }
-#else
-    temp = rand();
-    lut->config_in = temp;
-    for (int i=0; i<LUT_SIZE; ++i) {
-        lut_data[i] = (temp & 1);
-        temp = temp >> 1;
-    }
-    VL_PRINTF("din: %x\n", temp);
-#endif
-
-    lut->config_en = 1;
-    ticktock(lut);
-    lut->config_en = 0;
-    ticktock(lut);
-    lut->eval();
-
-    // Tests
-    int addr;
-    int errors;
-
-    // Sequential Access
-    errors = 0;
-    for (int i=0; i<LUT_SIZE; ++i) {
-        lut->addr = i;
-        ticktock(lut);
-        if (lut->out != lut_data[i]) {
-            errors += 1;
-            printf("Got %d Expected %d\n", lut->out, lut_data[i]);
-        }
-    }
-    if (errors) printf("SEQUENTIAL ACCESS TEST FAILED: %d/200 Errors.\n", errors);
-    else printf("SEQUENTIAL ACCESS TEST PASSED!\n");
-
-    // Random Access
-    errors = 0;
-    for (int i=0; i<200; ++i) {
-        addr = rand() % LUT_SIZE;
-        lut->addr = addr;
-        ticktock(lut);
-        if (lut->out != lut_data[addr]) {
-            errors += 1;
-            printf("At addr: %x: Got %d Expected %d\n", addr, lut->out, lut_data[addr]);
-        }
-    }
-    if (errors) printf("RANDOM ACCESS TEST FAILED: %d/200 Errors.\n", errors);
-    else printf("RANDOM ACCESS TEST PASSED!\n");
+    lut_s44 test(lut);
+    test.test_lut(500);
 
 #if VM_TRACE // Dump trace
     if (tfp) tfp->dump(main_time);
