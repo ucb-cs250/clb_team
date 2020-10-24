@@ -8,6 +8,7 @@ module lut_sXX_softcode #(
 
     // Block Style Configuration
     // NOTE: MOST SIGNIFICANT BIT OF CFG DETERMINES FRACTURING
+    // config_in = {use_fracture, first_lut, second_lut}
     input cclk,
     input cen,
     input [2*MEM_SIZE:0] config_in
@@ -25,7 +26,7 @@ end
 
 lut #(.INPUTS(INPUTS)) first_lut (
     .addr(addr[INPUTS*2-1:INPUTS]),
-    .out(out[0]),
+    .out(out[1]),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in[2*MEM_SIZE-1:MEM_SIZE])
@@ -33,7 +34,7 @@ lut #(.INPUTS(INPUTS)) first_lut (
 
 lut #(.INPUTS(INPUTS)) second_lut (
     .addr({second_in, addr[INPUTS-2:0]}),
-    .out(out[1]),
+    .out(out[0]),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in[MEM_SIZE-1:0])

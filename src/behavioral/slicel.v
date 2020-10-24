@@ -6,9 +6,11 @@ module slicel #(
 ) (
     input [2*S_XX_BASE-1:0] luts_in [NUM_LUTS-1:0],
     input [MUX_LVLS-1:0] higher_order_addr,
+    // CONFIG
     input [2*CFG_SIZE-1:0] luts_config_in [NUM_LUTS-1:0],
     input [MUX_LVLS-1:0] inter_lut_mux_config,
     input config_use_cc,
+    // 
     input cclk,
     input clk,
     input reg_ce,
