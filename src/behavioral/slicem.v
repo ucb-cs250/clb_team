@@ -27,8 +27,8 @@ module slicem #(
     // Dual-Port Write
     input write_lut_select,
     
-    output [1:0] out [NUM_LUTS-1:0],
-    output reg [1:0] sync_out [NUM_LUTS-1:0]
+    output [2*NUM_LUTS-1:0] out,
+    output reg [2*NUM_LUTS-1:0] sync_out
 );
 
 wire [2*NUM_LUTS-1:0] luts_out; // [NUM_LUTS-1:0];
@@ -51,24 +51,24 @@ generate
     genvar i;
     genvar j;
     for (i = 0; i < NUM_LUTS; i=i+1) begin
-        lut_sXX_m #(.INPUTS(S_XX_BASE)) (
+        lut_sXX_m #(.INPUTS(S_XX_BASE)) lut (
             .addr(luts_in[2*S_XX_BASE*(i+1)-1:2*S_XX_BASE*i]),
             .out(luts_out[2*i+1:2*i]),
             .clk(clk),
             .cclk(cclk),
             .cen(cen),
-            .config_in(luts_config_in[2*CFG_SIZE*(i+1):2*CFG_SIZE*i]),
+            .config_in(luts_config_in[2*CFG_SIZE*(i+1)-1:2*CFG_SIZE*i]),
             .data_in(data_in),
             .write_en(write_en & one_hot_wen[i]),
             .write_lut_select(write_lut_select)
         );
 
-        cc_p[i] = luts_out[2*i];
-        cc_g[i] = luts_out[2*i+1];
+        assign cc_p[i] = luts_out[2*i];
+        assign cc_g[i] = luts_out[2*i+1];
         assign muxes_in = luts_out[2*i];
         assign out[2*i+1:2*i] = use_cc ? 
-                        {luts_out[i][1], cc_s[i]} :
-                        {luts_out[i][1], muxes_out[i]};
+                        {luts_out[2*i+1], cc_s[i]} :
+                        {luts_out[2*i+1], muxes_out[i]};
         // Registers capture main LUT outputs
         always @(posedge clk) begin
             if (reg_ce) begin
@@ -92,7 +92,7 @@ carry_chain #(.INPUTS(NUM_LUTS)) cc (
 mux_f_slice #(
     .NUM_LUTS(NUM_LUTS), .MUX_LEVEL(MUX_LVLS)
 ) muxes (
-    .luts_out(muxes_in);
+    .luts_out(muxes_in),
     .addr(higher_order_addr),
     .out(muxes_out),
     .cclk(cclk),

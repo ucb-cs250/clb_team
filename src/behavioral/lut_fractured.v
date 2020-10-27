@@ -29,7 +29,7 @@ generate
             .out(upper_out),
             .cclk(cclk),
             .cen(cen),
-            .config_in(MEM_SIZE-1:HALF_MEM_SIZE)
+            .config_in(config_in[MEM_SIZE-1:HALF_MEM_SIZE])
         );
 
         lut #(
@@ -39,7 +39,7 @@ generate
             .out(lower_out),
             .cclk(cclk),
             .cen(cen),
-            .config_in(HALF_MEM_SIZE-1:0)
+            .config_in(config_in[HALF_MEM_SIZE-1:0])
         );
         assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 
                                        lower_out[SUBOUTPUTS-1], 
@@ -53,7 +53,7 @@ generate
             .out(upper_out),
             .cclk(cclk),
             .cen(cen),
-            .config_in(MEM_SIZE-1:HALF_MEM_SIZE)
+            .config_in(config_in[MEM_SIZE-1:HALF_MEM_SIZE])
         );
 
         lut_fractured #(
@@ -63,7 +63,7 @@ generate
             .addr(addr[INPUTS-2:0]),
             .out(lower_out),
             .cclk(cclk),
-            .cen(HALF_MEM_SIZE-1:0)
+            .cen(cen[HALF_MEM_SIZE-1:0])
         );
 
         assign out = {addr[INPUTS-1] ? upper_out[SUBOUTPUTS-1] : 

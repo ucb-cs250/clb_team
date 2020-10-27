@@ -34,9 +34,9 @@ wire [CC_INPUTS*NUM_LUTS-1:0] cc_p; // [NUM_LUTS-1:0];
 wire [CC_INPUTS*NUM_LUTS-1:0] cc_g; // [NUM_LUTS-1:0];
 wire [CC_INPUTS*NUM_LUTS-1:0] cc_s; // [NUM_LUTS-1:0];
 wire [NUM_LUTS-2:0] f_mux_intermediate;
-wire main_luts_out [NUM_LUTS-1:0];
-wire secondary_luts_out [NUM_LUTS-1:0];
-wire muxes_out [NUM_LUTS-1:0];
+wire [NUM_LUTS-1:0] main_luts_out;
+wire [NUM_LUTS-1:0] secondary_luts_out;
+wire [NUM_LUTS-1:0] muxes_out;
 
 assign carry_chain_out = cc_s; 
 
@@ -52,7 +52,7 @@ generate
     genvar i;
     genvar j;
     for (i = 0; i < NUM_LUTS; i=i+1) begin
-        lut_sXX_frac #(.INPUTS(S_XX_BASE), .FRACTURING(FRACTURE_LEVEL)) (
+        lut_sXX_frac #(.INPUTS(S_XX_BASE), .FRACTURING(FRACTURE_LEVEL)) lut (
             .addr(luts_in[2*S_XX_BASE*(i+1)-1:2*S_XX_BASE*i]),
             .out(luts_out[(2*OUTPUTS+2)*(i+1)-1:(2*OUTPUTS+2)*i]),
             .cclk(cclk),
@@ -60,8 +60,8 @@ generate
             .config_in(luts_config_in[2*CFG_SIZE*(i+1)-1:2*CFG_SIZE*i])
         );
         for (j = 0; j < OUTPUTS; j = j + 1) begin
-            cc_p[CC_INPUTS*i+j] = luts_out[(2*OUTPUTS+2)*i+2*j];
-            cc_g[CC_INPUTS*i+j] = luts_out[(2*OUTPUTS+2)*i+2*j+1];
+            assign cc_p[CC_INPUTS*i+j] = luts_out[(2*OUTPUTS+2)*i+2*j];
+            assign cc_g[CC_INPUTS*i+j] = luts_out[(2*OUTPUTS+2)*i+2*j+1];
         end
         assign main_luts_out[i] = luts_out[(2*OUTPUTS+2)*i+2*OUTPUTS+1];
         assign secondary_luts_out[i] = luts_out[(2*OUTPUTS+2)*i+2*OUTPUTS];
@@ -69,7 +69,7 @@ generate
         // Registers capture main LUT outputs
         always @(posedge clk) begin
             if (reg_ce) begin
-                sync_out[NUM_LUTS*i+1:NUM_LUTS*i] <= luts_out[(2*OUTPUTS+2)*i+2*OUTPUTS+1:(2*OUTPUTS+2)*i+2*OUTPUTS-1];
+                sync_out[2*i+1:2*i] <= luts_out[(2*OUTPUTS+2)*i+2*OUTPUTS+1:(2*OUTPUTS+2)*i+2*OUTPUTS-1];
             end
         end
     end
@@ -89,7 +89,7 @@ carry_chain #(.INPUTS(NUM_LUTS*CC_INPUTS)) cc (
 mux_f_slice #(
     .NUM_LUTS(NUM_LUTS), .MUX_LEVEL(MUX_LVLS)
 ) muxes (
-    .luts_out(muxes_out);
+    .luts_out(muxes_out),
     .addr(higher_order_addr),
     .out(main_luts_out),
     .cclk(cclk),

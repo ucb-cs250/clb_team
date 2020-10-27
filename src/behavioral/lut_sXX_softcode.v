@@ -5,7 +5,7 @@ module lut_sXX_softcode #(
     parameter MEM_SIZE=2**INPUTS
 ) (
     input [INPUTS*2-1:0] addr,
-    output out[1:0],
+    output [1:0] out,
 
     // Block Style Configuration
     // NOTE: MOST SIGNIFICANT BIT OF CFG DETERMINES FRACTURING

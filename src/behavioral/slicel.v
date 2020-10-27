@@ -20,10 +20,10 @@ module slicel #(
     input Ci,
     output Co,
     output [2*NUM_LUTS-1:0] out, // [NUM_LUTS-1:0],
-    output reg [2*NUM_LUTS-1:0], // sync_out [NUM_LUTS-1:0]
+    output reg [2*NUM_LUTS-1:0] sync_out //[NUM_LUTS-1:0]
 );
 
-wire [2*NUM_LUTS-1:0] luts_out // [NUM_LUTS-1:0];
+wire [2*NUM_LUTS-1:0] luts_out; // [NUM_LUTS-1:0];
 wire [NUM_LUTS-1:0] muxes_out;
 wire [NUM_LUTS-1:0] muxes_in;
 wire [NUM_LUTS-1:0] cc_p;
@@ -41,17 +41,17 @@ generate
     genvar i;
     genvar j;
     for (i = 0; i < NUM_LUTS; i=i+1) begin
-        lut_sXX_softcode #(.INPUTS(S_XX_BASE)) (
+        lut_sXX_softcode #(.INPUTS(S_XX_BASE)) lut (
             .addr(luts_in[2*S_XX_BASE*(i+1)-1:2*S_XX_BASE*i]),
             .out(luts_out[2*i+1:2*i]),
             .cclk(cclk),
             .cen(cen),
-            .config_in(luts_config_in[2*CFG_SIZE*(i+1):2*CFG_SIZE*i])
+            .config_in(luts_config_in[2*CFG_SIZE*(i+1)-1:2*CFG_SIZE*i])
         );
 
-        cc_p[i] = luts_out[2*i];
-        cc_g[i] = luts_out[2*i+1];
-        assign muxes_in = luts_out[2*i];
+        assign cc_p[i] = luts_out[2*i];
+        assign cc_g[i] = luts_out[2*i+1];
+        assign muxes_in[i] = luts_out[2*i];
         assign out[2*i+1:2*i] = use_cc ? 
                         {luts_out[2*i+1], cc_s[i]} :
                         {luts_out[2*i+1], muxes_out[i]};
@@ -78,7 +78,7 @@ carry_chain #(.INPUTS(NUM_LUTS)) cc (
 mux_f_slice #(
     .NUM_LUTS(NUM_LUTS), .MUX_LEVEL(MUX_LVLS)
 ) muxes (
-    .luts_out(muxes_in);
+    .luts_out(muxes_in),
     .addr(higher_order_addr),
     .out(muxes_out),
     .cclk(cclk),

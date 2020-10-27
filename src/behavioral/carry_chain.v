@@ -29,7 +29,7 @@ module carry_chain #(
     generate 
         genvar i;
         for (i = 0; i < INPUTS; i=i+1) begin
-            carry_chain_single (
+            carry_chain_single cc1 (
                 .P(P[i]),
                 .G(G[i]),
                 .S(S[i]),

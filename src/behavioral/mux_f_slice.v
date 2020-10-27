@@ -14,8 +14,6 @@ module mux_f_slice #(
     input [MUX_LEVEL-1:0] config_in
 );
 
-always 
-
 generate
     if (MUX_LEVEL==1) begin
         assign out[0] = config_state[0] ? (addr[0] ? luts_out[1] : luts_out[0]) : luts_out[0];
@@ -28,7 +26,7 @@ generate
         mux_f_slice #(
             .NUM_LUTS(HALF_LUTS), .MUX_LEVEL(MUX_LEVEL-1)
         ) mux_lower (
-            .luts_out(luts_out[HALF_LUTS-1:0]);
+            .luts_out(luts_out[HALF_LUTS-1:0]),
             .addr(addr[MUX_LEVEL-2:0]),
             .out(intermediate_out[HALF_LUTS-1:0]),
             .cclk(cclk),
@@ -38,7 +36,7 @@ generate
         mux_f_slice #(
             .NUM_LUTS(HALF_LUTS), .MUX_LEVEL(MUX_LEVEL-1)
         ) mux_higher (
-            .luts_out(luts_out[NUM_LUTS-1:HALF_LUTS]);
+            .luts_out(luts_out[NUM_LUTS-1:HALF_LUTS]),
             .addr(addr[MUX_LEVEL-2:0]),
             .out(intermediate_out[NUM_LUTS-1:HALF_LUTS]),
             .cclk(cclk),
