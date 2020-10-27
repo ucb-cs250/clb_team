@@ -1,7 +1,8 @@
 ///////// Mux system for the F7MUX and F8MUX equivalents ////
 
 module mux_f_slice #(
-    parameter NUM_LUTS=2, MUX_LEVEL=1
+    parameter NUM_LUTS=2, 
+    parameter MUX_LEVEL=1
 ) (
     input  [NUM_LUTS-1:0] luts_out,
     input  [MUX_LEVEL-1:0] addr,

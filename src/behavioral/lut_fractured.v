@@ -2,8 +2,10 @@
 // outputs: {N-LUT_OUT,{FRAC_LVL_OUT}} //
 
 module lut_fractured #(
-    parameter INPUTS=4, FRACTURING=1, MEM_SIZE=2**INPUTS,
-    parameter OUTPUTS=2**(FRACTURING), SUBOUTPUTS=2**(FRACTURING-1)
+    parameter INPUTS=4, FRACTURING=1, 
+    parameter MEM_SIZE=2**INPUTS,
+    parameter OUTPUTS=2**(FRACTURING), 
+    parameter SUBOUTPUTS=2**(FRACTURING-1)
 ) (
     input  [INPUTS-1:0] addr,
     output [OUTPUTS-1:0] out,

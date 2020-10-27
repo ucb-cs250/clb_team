@@ -1,7 +1,8 @@
 ///////// SOFTCODED SXX LUT /////////
 
 module lut_sXX_softcode #(
-    parameter INPUTS=4, MEM_SIZE=2**INPUTS
+    parameter INPUTS=4, 
+    parameter MEM_SIZE=2**INPUTS
 ) (
     input [INPUTS*2-1:0] addr,
     output out[1:0],

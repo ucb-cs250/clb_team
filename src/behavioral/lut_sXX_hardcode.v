@@ -1,7 +1,8 @@
 ///////// HARDCODED SXX LUT /////////
 
 module lut_sXX_hardcode #(
-    parameter INPUTS=4, MEM_SIZE=2**INPUTS
+    parameter INPUTS=4, 
+    parameter MEM_SIZE=2**INPUTS
 ) (
     input [INPUTS*2-2:0] addr,
     output out,

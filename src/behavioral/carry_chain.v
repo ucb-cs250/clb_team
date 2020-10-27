@@ -1,8 +1,11 @@
 ///////// CARRY CHAIN /////////
 
 module carry_chain_single (
-        input P, G, Ci,
-        output Co, S
+        input P, 
+        input G, 
+        input Ci,
+        output Co, 
+        output S
     );
 
     assign Co = P ? Ci : G;
