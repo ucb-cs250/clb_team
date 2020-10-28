@@ -1,4 +1,6 @@
 *.swp
 *.o
+*.a
 *.d
 *.vcd
+*obj_dir*
