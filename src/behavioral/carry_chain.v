@@ -1,8 +1,11 @@
 ///////// CARRY CHAIN /////////
 
 module carry_chain_single (
-        input P, G, Ci,
-        output Co, S
+        input P, 
+        input G, 
+        input Ci,
+        output Co, 
+        output S
     );
 
     assign Co = P ? Ci : G;
@@ -26,7 +29,7 @@ module carry_chain #(
     generate 
         genvar i;
         for (i = 0; i < INPUTS; i=i+1) begin
-            carry_chain_single (
+            carry_chain_single cc1 (
                 .P(P[i]),
                 .G(G[i]),
                 .S(S[i]),

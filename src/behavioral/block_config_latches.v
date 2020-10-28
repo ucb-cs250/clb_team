@@ -3,7 +3,8 @@
  * This exists to make it easier to swap in a custom config of latches
  */
 module block_config_latches #(
-    parameter ADDR_BITS=4, MEM_SIZE=2**ADDR_BITS
+    parameter ADDR_BITS=4, 
+    parameter MEM_SIZE=2**ADDR_BITS
 ) (
     // IO
     input [ADDR_BITS-1:0] addr, 

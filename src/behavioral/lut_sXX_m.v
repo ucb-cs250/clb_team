@@ -1,10 +1,11 @@
 ///////// SOFTCODED SXX LUT /////////
 
-module lut_sXX_softcode #(
-    parameter INPUTS=4, MEM_SIZE=2**INPUTS
+module lut_sXX_m #(
+    parameter INPUTS=4, 
+    parameter MEM_SIZE=2**INPUTS
 ) (
     input [INPUTS*2-1:0] addr,
-    output out[1:0],
+    output [1:0] out,
 
     // user-write clock
     input clk,
@@ -48,7 +49,7 @@ lut #(.INPUTS(INPUTS)) second_lut (
     .clk(clk),
     .cclk(cclk),
     .cen(cen),
-    .config_in(config_in[MEM_SIZE-1:0])
+    .config_in(config_in[MEM_SIZE-1:0]),
     .data_in(data_in),
     .write_en(write_en&(~write_lut_select))
 );

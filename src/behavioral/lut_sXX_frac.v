@@ -3,11 +3,14 @@
 // out: s_xx_chain, s_xx_start, {f_lvl_out}
 
 module lut_sXX_frac #(
-    parameter INPUTS=4, FRACTURING=2, MEM_SIZE=2**INPUTS,
-    parameter OUTPUTS=2**(FRACTURING), SUBOUTPUTS=2**(FRACTURING-1)
+    parameter INPUTS=4, 
+    parameter FRACTURING=2, 
+    parameter MEM_SIZE=2**INPUTS,
+    parameter OUTPUTS=2**(FRACTURING), 
+    parameter SUBOUTPUTS=2**(FRACTURING-1)
 ) (
     input [INPUTS*2-1:0] addr,
-    output out[2*OUTPUTS+1:0],
+    output [2*OUTPUTS+1:0] out,
 
     // Block Style Configuration
     // NOTE: MOST SIGNIFICANT BIT OF CFG DETERMINES FRACTURING
