@@ -24,9 +24,5 @@ block_config_latches #(.ADDR_BITS(INPUTS)) latches0 (
     .config_in(config_in)
 );
 
-//always @(*) begin
-//    $display("[%0t] Model running \n", $time);
-//end
-//
 endmodule
 

@@ -2,16 +2,12 @@
 
 module slicel #(
     parameter S_XX_BASE=4, 
-    //parameter CFG_SIZE=2**S_XX_BASE+1,
-    parameter CFG_SIZE=2**S_XX_BASE,
-    parameter SXX_CFG_SIZE = 2*CFG_SIZE + 1,
-    parameter NUM_LUTS = 4, 
-    parameter MUX_LVLS = $clog2(NUM_LUTS) // assume NUM_LUTS is a power of 2
+    parameter NUM_LUTS = 4
 ) (
-    input [2*S_XX_BASE*NUM_LUTS-1:0] luts_in, // [NUM_LUTS-1:0],
+    input [2*S_XX_BASE*NUM_LUTS-1:0] luts_in,
     input [MUX_LVLS-1:0] higher_order_addr,
     // CONFIG
-    input [SXX_CFG_SIZE*NUM_LUTS-1:0] luts_config_in, // [NUM_LUTS-1:0],
+    input [CFG_SIZE*NUM_LUTS-1:0] luts_config_in,
     input [MUX_LVLS-1:0] inter_lut_mux_config,
     input config_use_cc,
     // 
@@ -21,11 +17,16 @@ module slicel #(
     input cen,
     input Ci,
     output Co,
-    output [2*NUM_LUTS-1:0] out, // [NUM_LUTS-1:0],
-    output reg [2*NUM_LUTS-1:0] sync_out //[NUM_LUTS-1:0]
+    output [2*NUM_LUTS-1:0] out,
+    output reg [2*NUM_LUTS-1:0] sync_out
 );
 
-wire [2*NUM_LUTS-1:0] luts_out; // [NUM_LUTS-1:0];
+// 2x configs bits for the dual LUTs in S44 + 1 config bit for interal LUT select
+localparam CFG_SIZE=2*(2**S_XX_BASE)+1;
+// assume NUM_LUTS is a power of 2
+localparam MUX_LVLS = $clog2(NUM_LUTS);
+
+wire [2*NUM_LUTS-1:0] luts_out;
 wire [NUM_LUTS-1:0] muxes_out;
 wire [NUM_LUTS-1:0] muxes_in;
 wire [NUM_LUTS-1:0] cc_p;
@@ -48,7 +49,7 @@ generate
             .out(luts_out[2*i+1:2*i]),
             .cclk(cclk),
             .cen(cen),
-            .config_in(luts_config_in[SXX_CFG_SIZE*(i+1)-1:SXX_CFG_SIZE*i]) // used to be CFG_SIZE
+            .config_in(luts_config_in[CFG_SIZE*(i+1)-1:CFG_SIZE*i])
         );
 
         assign cc_p[i] = luts_out[2*i];
@@ -87,6 +88,5 @@ mux_f_slice #(
     .cen(cen),
     .config_in(inter_lut_mux_config)
 );
-
 
 endmodule
