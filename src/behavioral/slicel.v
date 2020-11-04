@@ -2,14 +2,16 @@
 
 module slicel #(
     parameter S_XX_BASE=4, 
-    parameter CFG_SIZE=2**S_XX_BASE+1,
+    //parameter CFG_SIZE=2**S_XX_BASE+1,
+    parameter CFG_SIZE=2**S_XX_BASE,
+    parameter SXX_CFG_SIZE = 2*CFG_SIZE + 1,
     parameter NUM_LUTS = 4, 
     parameter MUX_LVLS = $clog2(NUM_LUTS) // assume NUM_LUTS is a power of 2
 ) (
     input [2*S_XX_BASE*NUM_LUTS-1:0] luts_in, // [NUM_LUTS-1:0],
     input [MUX_LVLS-1:0] higher_order_addr,
     // CONFIG
-    input [2*CFG_SIZE*NUM_LUTS-1:0] luts_config_in, // [NUM_LUTS-1:0],
+    input [SXX_CFG_SIZE*NUM_LUTS-1:0] luts_config_in, // [NUM_LUTS-1:0],
     input [MUX_LVLS-1:0] inter_lut_mux_config,
     input config_use_cc,
     // 
@@ -30,7 +32,7 @@ wire [NUM_LUTS-1:0] cc_p;
 wire [NUM_LUTS-1:0] cc_g;
 wire [NUM_LUTS-1:0] cc_s;
 
-reg use_cc;
+reg use_cc; // shouldn't interlutmuxconfig also get saved here.
 always @(posedge cclk) begin
     if (cen) begin
         use_cc <= config_use_cc;
@@ -46,7 +48,7 @@ generate
             .out(luts_out[2*i+1:2*i]),
             .cclk(cclk),
             .cen(cen),
-            .config_in(luts_config_in[2*CFG_SIZE*(i+1)-1:2*CFG_SIZE*i])
+            .config_in(luts_config_in[SXX_CFG_SIZE*(i+1)-1:SXX_CFG_SIZE*i]) // used to be CFG_SIZE
         );
 
         assign cc_p[i] = luts_out[2*i];

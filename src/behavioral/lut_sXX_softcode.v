@@ -15,9 +15,10 @@ module lut_sXX_softcode #(
     input [2*MEM_SIZE:0] config_in
 );
 
-wire second_in;
+wire second_in, out_upper, out_lower;
 reg split = 1'b0;
-assign second_in = split ? addr[INPUTS] : out[1];
+assign second_in = split ? addr[INPUTS] : out_upper;
+assign out = {out_upper, out_lower}; // had to split out because of verilator's optimization strategy giving unoptflat errors
 
 always @(posedge cclk) begin
     if (cen) begin
@@ -27,7 +28,7 @@ end
 
 lut #(.INPUTS(INPUTS)) first_lut (
     .addr(addr[INPUTS*2-1:INPUTS]),
-    .out(out[1]),
+    .out(out_upper),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in[2*MEM_SIZE-1:MEM_SIZE])
@@ -35,7 +36,7 @@ lut #(.INPUTS(INPUTS)) first_lut (
 
 lut #(.INPUTS(INPUTS)) second_lut (
     .addr({second_in, addr[INPUTS-2:0]}),
-    .out(out[0]),
+    .out(out_lower),
     .cclk(cclk),
     .cen(cen),
     .config_in(config_in[MEM_SIZE-1:0])

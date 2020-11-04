@@ -1,5 +1,7 @@
 ///////// CARRY CHAIN /////////
 
+/* verilator lint_off DECLFILENAME */
+/* verilator lint_off UNOPTFLAT */
 module carry_chain_single (
         input P, 
         input G, 
@@ -23,8 +25,8 @@ module carry_chain #(
     );
 
     wire [INPUTS:0] C;
-    assign Co = C[INPUTS];
     assign C[0] = Ci;
+    assign Co = C[INPUTS];
 
     generate 
         genvar i;
@@ -40,3 +42,4 @@ module carry_chain #(
     endgenerate
 endmodule
 
+/* lint_on */

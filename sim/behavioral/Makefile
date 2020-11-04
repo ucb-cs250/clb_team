@@ -20,7 +20,7 @@ VERILATOR = $(VERILATOR_ROOT)/bin/verilator
 VERILATOR_COVERAGE = $(VERILATOR_ROOT)/bin/verilator_coverage
 endif
 
-VERILATOR_FLAGS =
+VERILATOR_FLAGS = $(FLAGS)
 # Generate C++ in executable form
 VERILATOR_FLAGS += -cc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
@@ -96,7 +96,7 @@ run:
 	@echo
 	@echo "-- COVERAGE ----------------"
 	@rm -rf logs/annotated
-	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
+	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/$*_coverage.dat
 
 	@echo
 	@echo "-- DONE --------------------"
