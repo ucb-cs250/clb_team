@@ -10,6 +10,8 @@ module slicel #(
     input [CFG_SIZE*NUM_LUTS-1:0] luts_config_in,
     input [MUX_LVLS-1:0] inter_lut_mux_config,
     input config_use_cc,
+    input [2*NUM_LUTS-1:0] regs_config_in,
+
     // 
     input cclk,
     input clk,
@@ -21,7 +23,7 @@ module slicel #(
     output reg [2*NUM_LUTS-1:0] sync_out
 );
 
-// 2x configs bits for the dual LUTs in S44 + 1 config bit for interal LUT select
+// 2x configs bits for the dual LUTs in SXX + 1 config bit for internal LUT select
 localparam CFG_SIZE=2*(2**S_XX_BASE)+1;
 // assume NUM_LUTS is a power of 2
 localparam MUX_LVLS = $clog2(NUM_LUTS);
@@ -58,10 +60,15 @@ generate
         assign out[2*i+1:2*i] = use_cc ? 
                         {luts_out[2*i+1], cc_s[i]} :
                         {luts_out[2*i+1], muxes_out[i]};
-        // Registers capture main LUT outputs
+
+        // Registers capture main CLB outputs
         always @(posedge clk) begin
-            if (reg_ce) begin
-                sync_out[2*i+1:2*i] <= luts_out[2*i+1:2*i];
+            if (cen) begin
+                // set the initial states of the FFs from the configuration bits
+                sync_out[i] <= regs_config_in[i];
+            end
+            else if (reg_ce) begin
+                sync_out[2*i+1:2*i] <= out[2*i+1:2*i];
             end
         end
     end
