@@ -65,7 +65,7 @@ generate
         always @(posedge clk) begin
             if (cen) begin
                 // set the initial states of the FFs from the configuration bits
-                sync_out[i] <= regs_config_in[i];
+                sync_out[2*i+1:2*i] <= regs_config_in[2*i+1:2*i];
             end
             else if (reg_ce) begin
                 sync_out[2*i+1:2*i] <= out[2*i+1:2*i];
