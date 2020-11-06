@@ -2,7 +2,11 @@
 
 module slicel #(
     parameter S_XX_BASE=4, 
-    parameter NUM_LUTS = 4
+    parameter NUM_LUTS = 4,
+    // 2x configs bits for the dual LUTs in SXX + 1 config bit for internal LUT select
+    parameter CFG_SIZE=2*(2**S_XX_BASE)+1,
+    // assume NUM_LUTS is a power of 2
+    parameter MUX_LVLS = $clog2(NUM_LUTS)
 ) (
     input [2*S_XX_BASE*NUM_LUTS-1:0] luts_in,
     input [MUX_LVLS-1:0] higher_order_addr,
@@ -22,11 +26,6 @@ module slicel #(
     output [2*NUM_LUTS-1:0] out,
     output reg [2*NUM_LUTS-1:0] sync_out
 );
-
-// 2x configs bits for the dual LUTs in SXX + 1 config bit for internal LUT select
-localparam CFG_SIZE=2*(2**S_XX_BASE)+1;
-// assume NUM_LUTS is a power of 2
-localparam MUX_LVLS = $clog2(NUM_LUTS);
 
 wire [2*NUM_LUTS-1:0] luts_out;
 wire [NUM_LUTS-1:0] muxes_out;

@@ -14,6 +14,8 @@ module mux_f_slice #(
     input [MUX_LEVEL-1:0] config_in
 );
 
+reg [MUX_LEVEL-1:0] config_state;
+
 generate
     if (MUX_LEVEL==1) begin
         assign out[0] = config_state[0] ? (addr[0] ? luts_out[1] : luts_out[0]) : luts_out[0];
@@ -46,7 +48,6 @@ generate
     end
 endgenerate
 
-reg [MUX_LEVEL-1:0] config_state;
 always @(posedge cclk) begin
     if (cen) begin
         config_state <= config_in;
