@@ -17,7 +17,7 @@ module lut_sXX_softcode #(
 
 wire second_in, out_upper, out_lower;
 reg split = 1'b0;
-assign second_in = split ? addr[INPUTS] : out_upper;
+assign second_in = split ? addr[INPUTS-1] : out_upper;
 assign out = {out_upper, out_lower}; // had to split out because of verilator's optimization strategy giving unoptflat errors
 
 always @(posedge cclk) begin
