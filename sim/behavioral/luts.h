@@ -128,7 +128,7 @@ template <class D> class Test {
             Verilated::randReset(5); // randomly init all registers
             Verilated::commandArgs(argc, argv);
 
-            dut = new D{name, test_id};
+            dut = new D(name, test_id);
 
             // Trace 
 #if VM_TRACE
