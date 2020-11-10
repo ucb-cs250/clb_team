@@ -13,10 +13,13 @@ namespace luts {
 bool lookup(unsigned int config, char addr) {
     return (config >> addr) & 1;
 }
-bool s44_lookup(unsigned int config, char addr) {
+bool s44_lookup(unsigned int config, unsigned char addr) {
     int upper_config = config >> 16;
     int lower_config = config & 0b1111111111111111;
-    return lookup(lower_config, (lookup(upper_config, addr >> 3) << 3) | addr & 0b111);
+    int upper_addr = (addr >> 4) & 0b1111;              // OLD TB DID 3 HERE 
+    int upper_out = lookup(upper_config, upper_addr);
+    //printf("(%x->[%x]->%d, %x) ", upper_addr, upper_config, upper_out, addr & 0b111 | (upper_out << 3));
+    return lookup(lower_config, (upper_out << 3) | addr & 0b111);
 }
 int mux(bool select, int _0, int _1) {
     if (select) return _1;
@@ -34,31 +37,28 @@ template <class D> class Dut {
 
         void eval() {
             dut->eval();
+            tfp_dump();
         }
         void tick() {
             sim_time += 1;
             dut->clk = 1;
             eval();
-            tfp_dump();
         }
         void tock() {
             sim_time += 1;
             dut->clk = 0;
             eval();
-            tfp_dump();
         }
         void ticktock() {tick(); tock();}
 
         int configure(int *config, int len) {
             dut->cclk = 0; 
             eval();
-            tfp_dump();
             for (int i=0; i<len; ++i)
                 dut->config_in[i] = config[i];
             dut->cen = 1;
             dut->cclk = 1; 
             eval();
-            tfp_dump();
             dut->cclk = 0;
             return 0;
         }
@@ -129,15 +129,6 @@ template <class D> class Test {
             Verilated::commandArgs(argc, argv);
 
             dut = new D{name, test_id};
-            dut->reset();
-
-            // Configure Dut
-            std::cout << name << " Test #" << test_id << " Configuring... \n";
-            int temp;
-            temp = configure(config, config_len);
-            if (temp != 0)
-                std::cout << name << " Test #" << test_id << " FAILED::Invalid Configuration (" << temp << ")\n";
-            else if (verbosity >= 200) print_config();
 
             // Trace 
 #if VM_TRACE
@@ -153,6 +144,18 @@ template <class D> class Test {
                 tfp->open(&dummy[0]);  // Open the dump file
             }
 #endif
+
+            // Reset Dut
+            dut->reset();
+
+            // Configure Dut
+            std::cout << name << " Test #" << test_id << " Configuring... \n";
+            int temp;
+            temp = configure(config, config_len);
+            printf("finsihed config %ld", get_time());
+            if (temp != 0)
+                std::cout << name << " Test #" << test_id << " FAILED::Invalid Configuration (" << temp << ")\n";
+            else if (verbosity >= 200) print_config();
 
             // Run Test
             int errors = test_main(test_id, verbosity, iterations);
