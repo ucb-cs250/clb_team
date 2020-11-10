@@ -25,6 +25,7 @@ class SliceDut : public luts::Dut<Vslicel> {
             config[4] &= 0b1111;
             dut->inter_lut_mux_config = config[5] & 0b11;
             dut->config_use_cc        = (config[5] >> 2) & 1;
+            dut->regs_config_in       = config[6];
             //dut->reg_ce               = (config[5] >> 3) & 1;
 
             dut->cen = 1;
@@ -123,6 +124,9 @@ class SliceTest : public luts::Test<SliceDut> {
             bool reg_ce;    // 1b
             char ho_addr;   // 2b
 
+            // internal configuration
+            for (int i=0; i<8; ++i) reg_out[i] = (config[6] >> i) & 1;
+
             int j, k;
             for (int j=0; j<iterations; ++j) {
                 // GENERATE INPUTS 
@@ -180,6 +184,12 @@ class SliceTest : public luts::Test<SliceDut> {
                 if (ho_addr & 0b11) comb_out[0] = f8;
                 carry_out = carry[4];
 
+
+                printf("%s #%d [%ld] : VALUE : comb_out %d%d%d%d%d%d%d%d: reg_out %d%d%d%d%d%d%d%d\n",
+                        &name[0], test_id, get_time(), 
+                        comb_out[7], comb_out[6], comb_out[5], comb_out[4], comb_out[3], comb_out[2], comb_out[1], comb_out[0],
+                        reg_out[7], reg_out[6], reg_out[5], reg_out[4], reg_out[3], reg_out[2], reg_out[1], reg_out[0]);
+
                 // CHECKING
                 errors += dut->output(j >= RST_COUNT, verbosity, get_time(), comb_out, reg_out, carry_out);
                 tfp_dump();
@@ -217,24 +227,24 @@ class SliceTest : public luts::Test<SliceDut> {
             if (mode == RAND)
                 return rand_config();
             else if (mode == BASIC_S44) 
-                return assemble_config(rand(), rand(), rand(), rand(), 0b0000, 0b0, 0b00);
+                return assemble_config(rand(), rand(), rand(), rand(), 0b0000, 0b0, 0b00, rand());
             else if (mode == BASIC_FRAC) 
-                return assemble_config(rand(), rand(), rand(), rand(), 0b1111, 0b0, 0b00);
+                return assemble_config(rand(), rand(), rand(), rand(), 0b1111, 0b0, 0b00, rand());
             else if (mode == ADDER)         // 3 - ADDER 
                 // upper_lut = AND :: 1000 = 8
                 // lower_lut = XOR :: 0110 = 6
                 // config 00080006 or 88886666
-                return assemble_config(0x88886666, 0x88886666, 0x88886666, 0x88886666, 0b1111, 0b1, 0b00);
+                return assemble_config(0x88886666, 0x88886666, 0x88886666, 0x88886666, 0b1111, 0b1, 0b00, rand());
             return 1;
         }
 
         int rand_config() {
-            return assemble_config(rand(), rand(), rand(), rand(), rand() & 0xF, rand() & 1, rand() & 0xF);
+            return assemble_config(rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand());
         }
 
-        int assemble_config(int lut0, int lut1, int lut2, int lut3, char soft, bool cc, char lmuxes) {
+        int assemble_config(int lut0, int lut1, int lut2, int lut3, char soft, bool cc, char lmuxes, int regs) {
             free(config);
-            config_len = 6;
+            config_len = 7;
             config = (int*) malloc(sizeof(int) * config_len); 
             config[0] = lut0;
             config[1] = (lut1 << 1) | (soft & 1)               ;
@@ -242,6 +252,7 @@ class SliceTest : public luts::Test<SliceDut> {
             config[3] = (lut3 << 3) | (soft & 4) | (lut2 >> 30);
             config[4] =               (soft & 8) | (lut3 >> 29);
             config[5] = (cc << 2)   | (lmuxes & 0b11);
+            config[6] = regs & 0xFF;
             config_luts[0] = lut0;
             config_luts[1] = lut1;
             config_luts[2] = lut2;
@@ -318,7 +329,7 @@ int main(int argc, char** argv, char** env) {
     test = new SliceTest("slicel", mode);
     test->config_args(argc, argv, env);
     test->generate_config(mode);
-    test->run_test(mode, 300, 40);
+    test->run_test(mode, 400, 40);
     exit(0);
 }
 
