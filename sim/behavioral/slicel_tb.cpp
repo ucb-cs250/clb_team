@@ -173,7 +173,7 @@ class SliceTest : public luts::Test<SliceDut> {
                 else                   for (int i=0; i<8; i+=2) comb_out[i] = l_out[i];
                 if (ho_addr & 0b01) comb_out[4] = f7_1;
                 if (ho_addr & 0b11) comb_out[0] = f8;
-                carry_out = carry[5];
+                carry_out = carry[4];
 
                 // CHECKING
                 errors += dut->output(j >= RST_COUNT, verbosity, get_time(), comb_out, reg_out, carry_out);
