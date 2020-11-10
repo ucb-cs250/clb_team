@@ -1,4 +1,5 @@
 #include <string.h>
+#include <bitset>
 #include <verilated.h>
 #include "Vslicel.h"
 #include "luts.h"
@@ -75,6 +76,10 @@ class SliceDut : public luts::Dut<Vslicel> {
                                 &name[0], test_id, time, i, reg_out[i], ((dut->sync_out >> i) & 1));
                 }
             }
+            if (verbosity >= 300 && test_id == ADDER) {
+                printf("%s #%d [%ld] : CHECK OUTPUTS: SUM: %d%d%d%d%d\n", 
+                    &name[0], test_id, get_time(), carry_out, comb_out[3], comb_out[2], comb_out[1], comb_out[0]);
+            }
             return errors;
         }
 };
@@ -121,7 +126,7 @@ class SliceTest : public luts::Test<SliceDut> {
             int j, k;
             for (int j=0; j<iterations; ++j) {
                 // GENERATE INPUTS 
-                generate_inputs(test_id, lut_inputs, carry_in, reg_ce, ho_addr);
+                generate_inputs(test_id, verbosity, lut_inputs, carry_in, reg_ce, ho_addr);
                 if (verbosity >= 400)
                     printf("\t\tlut_in: %x, carry_in %d, ho_addr %x, reg_ce %d\n", lut_inputs, carry_in, ho_addr, reg_ce);
 
@@ -215,8 +220,11 @@ class SliceTest : public luts::Test<SliceDut> {
                 return assemble_config(rand(), rand(), rand(), rand(), 0b0000, 0b0, 0b00);
             else if (mode == BASIC_FRAC) 
                 return assemble_config(rand(), rand(), rand(), rand(), 0b1111, 0b0, 0b00);
-            //else if (mode == 3)         // 3 - ADDER 
-            //    return assemble_config(rand(), rand(), rand(), rand(), 0b1111, 0b0, 0b00);
+            else if (mode == ADDER)         // 3 - ADDER 
+                // upper_lut = AND :: 1000 = 8
+                // lower_lut = XOR :: 0110 = 6
+                // config 00080006 or 88886666
+                return assemble_config(0x88886666, 0x88886666, 0x88886666, 0x88886666, 0b1111, 0b1, 0b00);
             return 1;
         }
 
@@ -247,14 +255,28 @@ class SliceTest : public luts::Test<SliceDut> {
             return 0;
         }
 
-        int generate_inputs(int mode, int &lut_inputs, bool &carry_in, bool &reg_ce, char &ho_addr) {
+        int generate_inputs(int mode, int verbosity, int &lut_inputs, bool &carry_in, bool &reg_ce, char &ho_addr) {
             if (mode == RAND) { 
                 lut_inputs = rand();
                 carry_in   = rand() & 1;
                 reg_ce     = rand() & 1;
                 ho_addr    = rand() & 0b11;
             } else if (mode == ADDER) {
-                lut_inputs = rand();
+                char a = rand();
+                char b = rand();
+                //lut_inputs = rand(); // ________ ________ ________ __ab__ab 
+                lut_inputs  =  ((a & 1) << 1) | (b & 1);
+                lut_inputs |= (((a & 2) << 1) | (b & 2)) << 7;
+                lut_inputs |= (((a & 3) << 1) | (b & 3)) << 14;
+                lut_inputs |= (((a & 4) << 1) | (b & 4)) << 21;
+                if (verbosity >= 300) {
+                    std::bitset<4> _a(a);
+                    std::bitset<4> _b(b);
+                    std::bitset<32> l(lut_inputs);
+                    printf("%s #%d [%ld] : GEN INPUTS : A (", //%x) + B (%x) : lut_inputs ", 
+                        &name[0], test_id, get_time());
+                    std::cout << _a << ") B (" << _b << ") : lut_inputs " << l << "\n";
+                }
                 carry_in   = 0;
                 reg_ce     = 1;
                 ho_addr    = 0;
@@ -292,10 +314,11 @@ void test_luts() {
 }
 
 int main(int argc, char** argv, char** env) {
-    test = new SliceTest("slicel", ADDER);
+    int mode = ADDER;
+    test = new SliceTest("slicel", mode);
     test->config_args(argc, argv, env);
-    test->generate_config(BASIC_S44);
-    test->run_test(0, 200, 40);
+    test->generate_config(mode);
+    test->run_test(mode, 300, 40);
     exit(0);
 }
 
