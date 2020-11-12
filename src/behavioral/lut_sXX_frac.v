@@ -26,7 +26,7 @@ wire second_in;
 reg split = 1'b0;
 assign second_in = split ? addr[INPUTS] : lower_out[SUBOUTPUTS];
 
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
         split <= config_in[2*MEM_SIZE];
     end

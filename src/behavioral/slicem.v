@@ -41,7 +41,7 @@ wire [NUM_LUTS-1:0] one_hot_wen;
 assign one_hot_wen = 1'b1 << higher_order_addr;
 
 reg use_cc;
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
         use_cc <= config_use_cc;
     end

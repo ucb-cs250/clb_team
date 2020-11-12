@@ -41,7 +41,7 @@ wire [NUM_LUTS-1:0] muxes_out;
 assign carry_chain_out = cc_s; 
 
 reg use_cc;
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
         use_cc <= config_use_cc;
     end

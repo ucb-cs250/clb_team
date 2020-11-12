@@ -48,7 +48,7 @@ generate
     end
 endgenerate
 
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
         config_state <= config_in;
     end

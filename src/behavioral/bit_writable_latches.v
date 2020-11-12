@@ -29,13 +29,13 @@ reg [MEM_SIZE-1:0] mem = 0;
 assign out = mem[addr];
 
 // Block Style Configuration Logic
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
         mem <= config_in;
     end 
 end
 
-always @(posedge clk) begin
+always @(clk) begin
     if (write_en & (~cen)) begin
         mem[waddr] <= data_in;
     end
