@@ -1,10 +1,10 @@
-#include <string.h>
 #include <bitset>
+#include <stdio.h>
 #include <verilated.h>
 #include "Vslicel.h"
 #include "luts.h"
 
-#define RST_COUNT 4
+#define RST_COUNT 5
 #define RAND 0
 #define BASIC_S44  1
 #define BASIC_FRAC 2
@@ -12,15 +12,13 @@
 
 class SliceDut : public luts::Dut<Vslicel> {
     public :
-        SliceDut() : Dut() {}
-        SliceDut(std::string name, int id) : Dut(name, id) {}
+        SliceDut(const char *name, int id, int verbosity) : Dut(name, id, verbosity) {}
 
         int configure(int *config, int len) {
             dut->cclk = 0; ticktock(); //eval();
 
             for (int i=0; i<5; ++i) {
                 dut->luts_config_in[i] = config[i];
-                printf("cfg[%d] %x ", i, config[i]);
             }
             config[4] &= 0b1111;
             dut->inter_lut_mux_config = config[5] & 0b11;
@@ -41,45 +39,44 @@ class SliceDut : public luts::Dut<Vslicel> {
             dut->higher_order_addr = ho_addr;
             dut->reg_ce = reg_ce;
         }
+
+        void reset() {
+            Dut::reset();
+            input_set(0,0,0,0);
+        }
         
-        int output(bool check, int verbosity, vluint64_t time, int *comb_out, int *reg_out, bool carry_out) {
+        int output(bool check, int *comb_out, int *reg_out, bool carry_out) {
             int errors = 0;
             //dut->eval();
             ticktock();
             if (check) {
+                // comb_out
                 if (carry_out != dut->Co) {
                     errors += 1;
-                    printf("%s #%d [%ld] : ERROR : carry_out   : expected %x, got %x\n",
-                            &name[0], test_id, time, carry_out, dut->Co);
-                } else if (verbosity >= 300)
-                    printf("%s #%d [%ld] :       : carry_out   : expected %x, got %x\n",
-                            &name[0], test_id, time, carry_out, dut->Co);
+                    error("carry_out   : expected %x, got %x\n", carry_out, dut->Co);
+                } else if (verbosity >= 400)
+                    info("      : carry_out   : expected %x, got %x\n", carry_out, dut->Co);
                 for (int i=0; i<8; ++i) {
                     if (comb_out[i] != ((dut->out >> i) & 1)) {
                         errors += 1;
-                        printf("%s #%d [%ld] : ERROR : comb_out[%d] : expected %x, got %x\n", 
-                                &name[0], test_id, time, i, comb_out[i], ((dut->out >> i) & 1));
-                    } else if (verbosity >= 300)
-                        printf("%s #%d [%ld] :       : comb_out[%d] : expected %x, got %x\n", 
-                                &name[0], test_id, time, i, comb_out[i], ((dut->out >> i) & 1));
+                        error("comb_out[%d] : expected %x, got %x\n", i, comb_out[i], ((dut->out >> i) & 1));
+                    } else if (verbosity >= 400)
+                        info("      : comb_out[%d] : expected %x, got %x\n", i, comb_out[i], ((dut->out >> i) & 1));
                 }
-            //}
-            // reg_out
-            //ticktock();
-            //if (check) {
+
+                // reg_out
                 for (int i=0; i<8; ++i) {
                     if (reg_out[i] != ((dut->sync_out >> i) & 1)) {
                         errors += 1;
-                        printf("%s #%d [%ld] : ERROR : reg_out[%d]  : expected %x, got %x\n",
-                                &name[0], test_id, time, i, reg_out[i], ((dut->sync_out >> i) & 1));
-                    } else if (verbosity >= 300)
-                        printf("%s #%d [%ld] :       : reg_out[%d]  : expected %x, got %x\n",
-                                &name[0], test_id, time, i, reg_out[i], ((dut->sync_out >> i) & 1));
+                        error("reg_out[%d]  : expected %x, got %x\n", i, reg_out[i], ((dut->sync_out >> i) & 1));
+                    } else if (verbosity >= 400)
+                        info("      : reg_out[%d]  : expected %x, got %x\n", i, reg_out[i], ((dut->sync_out >> i) & 1));
                 }
             }
-            if (verbosity >= 300 && test_id == ADDER) {
-                printf("%s #%d [%ld] : CHECK OUTPUTS: SUM: %d%d%d%d%d\n", 
-                    &name[0], test_id, get_time(), carry_out, comb_out[3], comb_out[2], comb_out[1], comb_out[0]);
+            if (verbosity >= 200 && test_id == ADDER) {
+                info("CHECK OUTPUTS: SUM (sim): %d%d%d%d%d, (dut) %d%d%d%d%d\n", 
+                    carry_out, comb_out[6], comb_out[4], comb_out[2], comb_out[0], dut->Co, 
+                    (dut->out >> 6) & 1, (dut->out >> 4) & 1, (dut->out >> 2) & 1, (dut->out >> 0) & 1);
             }
             return errors;
         }
@@ -99,25 +96,23 @@ class SliceTest : public luts::Test<SliceDut> {
         int carry_out   =  0;
 
         void print_config() {
-            printf("\n ======================= \n \t CONFIG \n ======================= \n");
             int soft, mem, j, k;
             for (int i=0; i<4; ++i) {
                 j = i * 33 / 32;
                 k = i * 33 % 32;
                 mem = (config[j] >> k) | (config[j+1]) << (32 - k);
                 soft = (config[j+1] >> k) & 0b1;
-                printf("%s #%d [%ld] config : lut[%d] = mem: 0x%x, soft: %x\n", 
-                        &name[0], test_id, get_time(), i, mem, soft);
+                info("lut[%d] = mem: 0x%x, soft: %x\n", i, mem, soft);
             }
-            printf("%s #%d [%ld] config : use_cc: %d, lmuxes: %d\n",
-                    &name[0], test_id, get_time(), config[5] >> 2, config[5] & 0b11);
+            info("use_cc: %d, lmuxes: %d\n", config[5] >> 2, config[5] & 0b11);
+            info("regs: %x\n", config[6]);
         }
 
     public : 
-        SliceTest(std::string name) : Test(name){}
-        SliceTest(std::string name, int test_id) : Test(name, test_id) {}
+        SliceTest(const char *name) : Test(name){}
+        SliceTest(const char *name, int test_id, int verbosity, int seed) : Test(name, test_id, verbosity, seed) {}
         
-        int test_main(int test_id, int verbosity, int iterations) {
+        int test_main(int test_id, int iterations) {
             int errors = 0;
             int lut_inputs; // 4x2x4bits
             bool carry_in;  // 1b
@@ -130,9 +125,10 @@ class SliceTest : public luts::Test<SliceDut> {
             int j, k;
             for (int j=0; j<iterations; ++j) {
                 // GENERATE INPUTS 
-                generate_inputs(test_id, verbosity, lut_inputs, carry_in, reg_ce, ho_addr);
-                if (verbosity >= 400)
-                    printf("\t\tlut_in: %x, carry_in %d, ho_addr %x, reg_ce %d\n", lut_inputs, carry_in, ho_addr, reg_ce);
+                generate_inputs(test_id, lut_inputs, carry_in, reg_ce, ho_addr);
+                if (verbosity >= 300)
+                    info("lut_in: 0x%x, carry_in %d, ho_addr %x, reg_ce %d\n", lut_inputs, carry_in, ho_addr, reg_ce);
+                if (j==0) reg_ce = 0;
 
                 // DUT
                 dut->input_set(lut_inputs, carry_in, reg_ce, ho_addr);
@@ -153,8 +149,8 @@ class SliceTest : public luts::Test<SliceDut> {
                         l_out[i*2] = luts::s44_lookup(config_luts[i], (lut_inputs >> (i * 8)) & 0b11111111);
                     }
                 }
-                if (verbosity >= 400)
-                    printf("\t\tlut_out: %x %x, %x %x, %x %x, %x %x \n", l_out[0], l_out[1], l_out[2], l_out[3], l_out[4], l_out[5], l_out[6], l_out[7]);
+                if (verbosity >= 300)
+                    info("lut_out: %x%x%x%x%x%x%x%x \n", l_out[7], l_out[6], l_out[5], l_out[4], l_out[3], l_out[2], l_out[1], l_out[0]);
                 
                 // carry_chain
                 int sums[4] = {};
@@ -164,34 +160,39 @@ class SliceTest : public luts::Test<SliceDut> {
                 for (int i=0; i<4; ++i) {
                     p = l_out[i*2], g = l_out[i*2 + 1];
                     sums[i] = carry[i] ^ p;
-                    //carry[i+1] = luts::mux(p, g, carry[i]); // both of these should be valid implementations
-                    carry[i+1] = p && carry[i] || g;
-                    //printf("p %x, g %x, ci %x, s %x, co %x\n", p, g, carry[i], sums[i], carry[i+1]);
+                    carry[i+1] = luts::mux(p, g, carry[i]); // both of these should be valid implementations
+                    //carry[i+1] = p && carry[i] || g;
                 }
+                if (verbosity >= 300)
+                    info("carry_chain: sums: %x%x%x%x, carry: %x%x%x%x.%x \n", sums[3], sums[2], sums[1], sums[0], carry[4], carry[3], carry[2], carry[1], carry[0]);
 
                 // interlut_muxes
                 int f7_0, f7_1, f8; // 1 is upper mux
-                f7_1 = luts::mux(1 & ho_addr & config_lmuxes, l_out[4], l_out[6]);
-                f7_0 = luts::mux(1 & ho_addr & config_lmuxes, l_out[0], l_out[2]);
-                f8   = luts::mux(2 & ho_addr & config_lmuxes, f7_0    , f7_1    );
+                f7_1 = 1 & ho_addr & config_lmuxes ? l_out[6] : l_out[4]; //luts::mux(1 & ho_addr & config_lmuxes, l_out[4], l_out[6]);
+                f7_0 = 1 & ho_addr & config_lmuxes ? l_out[2] : l_out[0]; //luts::mux(1 & ho_addr & config_lmuxes, l_out[0], l_out[2]);
+                f8   = 2 & ho_addr & config_lmuxes ? f7_1     : f7_0    ; //luts::mux(2 & ho_addr & config_lmuxes, f7_0    , f7_1    );
                 
+                if (verbosity >= 300)
+                    info("pre_com: %x%x%x%x%x%x%x%x \n", comb_out[7], comb_out[6], comb_out[5], comb_out[4], comb_out[3], comb_out[2], comb_out[1], comb_out[0]);
                 // outputs
                 if (reg_ce) for (int i=0; i<8; ++i) reg_out[i] = comb_out[i];
                 for (int i=1; i<8; i+=2) comb_out[i] = l_out[i];
                 if (config_cc) for (int i=0; i<8; i+=2) comb_out[i] = sums[i >> 1];
-                else                   for (int i=0; i<8; i+=2) comb_out[i] = l_out[i];
-                if (ho_addr & 0b01) comb_out[4] = f7_1;
-                if (ho_addr & 0b11) comb_out[0] = f8;
+                else           for (int i=0; i<8; i+=2) comb_out[i] = l_out[i];
+                if (ho_addr & 0b01 & config_lmuxes) comb_out[4] = f7_1;
+                if (ho_addr & 0b11 & config_lmuxes) comb_out[0] = f8;
                 carry_out = carry[4];
 
+                if (verbosity >= 300)
+                    info("reg_out: %x%x%x%x%x%x%x%x \n", reg_out[7], reg_out[6], reg_out[5], reg_out[4], reg_out[3], reg_out[2], reg_out[1], reg_out[0]);
 
-                printf("%s #%d [%ld] : VALUE : comb_out %d%d%d%d%d%d%d%d: reg_out %d%d%d%d%d%d%d%d\n",
-                        &name[0], test_id, get_time(), 
-                        comb_out[7], comb_out[6], comb_out[5], comb_out[4], comb_out[3], comb_out[2], comb_out[1], comb_out[0],
-                        reg_out[7], reg_out[6], reg_out[5], reg_out[4], reg_out[3], reg_out[2], reg_out[1], reg_out[0]);
+                //printf("%s #%d [%ld] : VALUE : comb_out %d%d%d%d%d%d%d%d: reg_out %d%d%d%d%d%d%d%d\n",
+                //        &name[0], test_id, get_time(), 
+                //        comb_out[7], comb_out[6], comb_out[5], comb_out[4], comb_out[3], comb_out[2], comb_out[1], comb_out[0],
+                //        reg_out[7], reg_out[6], reg_out[5], reg_out[4], reg_out[3], reg_out[2], reg_out[1], reg_out[0]);
 
                 // CHECKING
-                errors += dut->output(j >= RST_COUNT, verbosity, get_time(), comb_out, reg_out, carry_out);
+                errors += dut->output(j >= RST_COUNT, comb_out, reg_out, carry_out);
                 tfp_dump();
 
                 /*// comb_out
@@ -239,18 +240,30 @@ class SliceTest : public luts::Test<SliceDut> {
         }
 
         int rand_config() {
-            return assemble_config(rand(), rand(), rand(), rand(), rand(), rand(), rand(), rand());
+            char lmuxes = rand() & 0xFF;
+            bool cc = rand() & 1;
+            if  (lmuxes & 2) lmuxes |= 1;
+            return assemble_config(rand(), rand(), rand(), rand(), cc ? 0b1111 : rand(), cc, cc ? 0 : lmuxes, rand());
         }
 
         int assemble_config(int lut0, int lut1, int lut2, int lut3, char soft, bool cc, char lmuxes, int regs) {
+            // verify config
+            if (cc && lmuxes) {
+                printf("Carry chain and higher order muxes cannot both be set.\n");
+                return 2;
+            } else if (!soft && cc) {
+                printf("Carry chain and s44 mode luts cannot both be set.\n");
+                return 2;
+            }
+            // assemgle config
             free(config);
             config_len = 7;
             config = (int*) malloc(sizeof(int) * config_len); 
             config[0] = lut0;
             config[1] = (lut1 << 1) | (soft & 1)               ;
-            config[2] = (lut2 << 2) | (soft & 2) | (lut1 >> 31);
-            config[3] = (lut3 << 3) | (soft & 4) | (lut2 >> 30);
-            config[4] =               (soft & 8) | (lut3 >> 29);
+            config[2] = (lut2 << 2) | (soft & 2) | ((lut1 >> 31) & 1);
+            config[3] = (lut3 << 3) | (soft & 4) | ((lut2 >> 30) & 3);
+            config[4] =               (soft & 8) | ((lut3 >> 29) & 7);
             config[5] = (cc << 2)   | (lmuxes & 0b11);
             config[6] = regs & 0xFF;
             config_luts[0] = lut0;
@@ -266,7 +279,7 @@ class SliceTest : public luts::Test<SliceDut> {
             return 0;
         }
 
-        int generate_inputs(int mode, int verbosity, int &lut_inputs, bool &carry_in, bool &reg_ce, char &ho_addr) {
+        int generate_inputs(int mode, int &lut_inputs, bool &carry_in, bool &reg_ce, char &ho_addr) {
             if (mode == RAND) { 
                 lut_inputs = rand();
                 carry_in   = rand() & 1;
@@ -278,21 +291,30 @@ class SliceTest : public luts::Test<SliceDut> {
                 //lut_inputs = rand(); // ________ ________ ________ __ab__ab 
                 lut_inputs  =  ((a & 1) << 1) | (b & 1);
                 lut_inputs |= (((a & 2) << 1) | (b & 2)) << 7;
-                lut_inputs |= (((a & 3) << 1) | (b & 3)) << 14;
-                lut_inputs |= (((a & 4) << 1) | (b & 4)) << 21;
-                if (verbosity >= 300) {
+                lut_inputs |= (((a & 4) << 1) | (b & 4)) << 14;
+                lut_inputs |= (((a & 8) << 1) | (b & 8)) << 21;
+                lut_inputs |= lut_inputs << 4;
+                if (verbosity >= 200) {
                     std::bitset<4> _a(a);
                     std::bitset<4> _b(b);
                     std::bitset<32> l(lut_inputs);
-                    printf("%s #%d [%ld] : GEN INPUTS : A (", //%x) + B (%x) : lut_inputs ", 
-                        &name[0], test_id, get_time());
-                    std::cout << _a << ") B (" << _b << ") : lut_inputs " << l << "\n";
+                    info("GEN INPUTS : A ("); std::cout << _a << ") B (" << _b << ") : lut_inputs " << l << "\n";
                 }
                 carry_in   = 0;
                 reg_ce     = 1;
                 ho_addr    = 0;
             }
             return 0;
+        }
+
+        void config_coverage(int &cc, int &m7, int &m8, int *soft) {
+            if (config_cc) cc += 1;
+            if (config_lmuxes & 1) m7 += 1;
+            if (config_lmuxes & 2) m8 += 1;
+            if (config_soft[0]) soft[0] += 1;
+            if (config_soft[1]) soft[1] += 1;
+            if (config_soft[2]) soft[2] += 1;
+            if (config_soft[3]) soft[3] += 1;
         }
 
         /*int configure(int *config, int len) {
@@ -325,11 +347,53 @@ void test_luts() {
 }
 
 int main(int argc, char** argv, char** env) {
-    int mode = ADDER;
-    test = new SliceTest("slicel", mode);
+    int MODE = RAND;
+    int ITER_TEST = 25;
+    /* DIRECTED TESTS
+    int VERBOSITY = 300;
+    int SEED = 145;
+    int state;
+    test = new SliceTest("slicel", MODE, VERBOSITY, SEED);
     test->config_args(argc, argv, env);
-    test->generate_config(mode);
-    test->run_test(mode, 400, 40);
+    if (test->generate_config(MODE))
+    //if (test->assemble_config(0xf7fc1ff7, 0xf33a00e2, 0xf3967cd6, 0xf056dec9, 0xF, 1, 0, 67))
+        printf("Failed to configure\b");
+    if (test->run_test(MODE, ITER_TEST))
+        printf("Test failed");
+    delete test;
+    /*/
+    // CONSTRAINED RANDOM TESTS 
+    int ITER_CONF = 200;
+    int VERBOSITY = 100;
+    int SEED = 0;
+    int state;
+
+    int failed = 0, skipped = 0;
+    int cc = 0, m7 = 0, m8 = 0;
+    int soft[4] = {};
+    char name[80];
+
+    for (int i=0; i < ITER_CONF; ++i) {
+        sprintf(name, "slicel RAND (%d)", i);
+        test = new SliceTest(name, MODE, VERBOSITY, SEED++);
+        test->config_args(argc, argv, env);
+        state = test->generate_config(MODE);
+        if (state) {
+            printf("Failed configuration (%d), skipping...\n", state);
+            skipped += 1; 
+        } else {
+            test->config_coverage(cc, m7, m8, soft);
+            failed += test->run_test(MODE, ITER_TEST);
+        }
+        delete test;
+    }
+
+    printf("\n ================================================================================ \n");
+    printf(" ============================    OVERALL SUMMARY     ============================ \n");
+    printf("Skipped Tests: %d/%d\n", skipped, ITER_CONF);
+    printf("Failed Tests: %d/%d\n", failed , ITER_CONF);
+    printf("Config Coverage: \n carry_chain: %d\n mux7: %d\n mux8: %d\n soft_luts: [%d, %d, %d, %d]\n", cc, m7, m8, soft[3], soft[2], soft[1], soft[0]);
+    // */
     exit(0);
 }
 

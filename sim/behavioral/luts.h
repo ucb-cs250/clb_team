@@ -8,6 +8,8 @@
 # include <verilated_vcd_c.h>
 #endif
 
+#define BUFFER_SIZE 256
+
 namespace luts {
 
 bool lookup(unsigned int config, char addr) {
@@ -18,7 +20,6 @@ bool s44_lookup(unsigned int config, unsigned char addr) {
     int lower_config = config & 0b1111111111111111;
     int upper_addr = (addr >> 4) & 0b1111;              // OLD TB DID 3 HERE 
     int upper_out = lookup(upper_config, upper_addr);
-    //printf("(%x->[%x]->%d, %x) ", upper_addr, upper_config, upper_out, addr & 0b111 | (upper_out << 3));
     return lookup(lower_config, (upper_out << 3) | addr & 0b111);
 }
 int mux(bool select, int _0, int _1) {
@@ -26,13 +27,48 @@ int mux(bool select, int _0, int _1) {
     return _0;
 }
 
-template <class D> class Dut {
+class Object {
+    protected :
+        Object(const char *name, const int test_id, const int verbosity) :
+                name(name), test_id(test_id), verbosity(verbosity) {}
+
+        const char *name;
+        const int test_id;
+        const int verbosity; 
+
+    public :
+        virtual vluint64_t get_time() = 0; 
+
+        void info(const char *format, ...) {
+            va_list args;
+            printf("%s #%x [%ld] : INFO  : ", name, test_id, get_time());
+            va_start(args, format); vprintf(format, args); va_end(args);
+        }
+
+        void error(const char *format, ...) {
+            va_list args;
+            printf("%s #%x [%ld] : ERROR : ", name, test_id, get_time());
+            va_start(args, format); vprintf(format, args); va_end(args);
+        }
+
+
+        void debug(int threshold, const char *format, ...) {
+            if (verbosity < threshold) return;
+            va_list args;
+            printf("%s #%x [%ld] : DEBUG : ", name, test_id, get_time());
+            va_start(args, format); vprintf(format, args); va_end(args);
+        }
+
+};
+
+template <class D> class Dut : public Object {
     // D is a verilated class
     public : 
-        Dut() : dut(new D), sim_time(0) {}
-        Dut(std::string name, int test_id) : dut(new D), sim_time(0), name(name), test_id(test_id) {
-            std::cout << "ID<" << test_id << ">\n";
-        }
+        //Dut() : dut(new D), sim_time(0) {
+        //    name = "Unnamed";
+        //}
+        Dut(const char *name, int test_id, int verbosity) : 
+                Object(name, test_id, verbosity), dut(new D), sim_time(0) {}
         ~Dut() {delete dut; dut = NULL;}
 
         void eval() {
@@ -87,22 +123,21 @@ template <class D> class Dut {
             if (tfp) tfp->dump(get_time());
         }
 
+
     protected : 
         D *dut;
         vluint64_t sim_time;
         VerilatedVcdC *tfp = NULL;
-        std::string name;
-        int test_id;
 };
 
-template <class D> class Test {
+template <class D> class Test : public Object {
     // D is a Dut class
     public :
-        Test(std::string name) : name(name), tfp(NULL), test_id(0) {}
-        Test(std::string name, int test_id) : name(name), tfp(NULL), test_id(test_id) {
-            std::cout << "NAME:: <" << name << ">\n";
-            std::cout << "ID  :: <" << test_id << ">\n";
-        }
+        Test(const char *name) : 
+                Object(name, 0, 100), tfp(NULL) {}
+
+        Test(const char *name, int test_id, int verbosity, int seed) : 
+                Object(name, test_id, verbosity), tfp(NULL), seed(seed) {srand(seed);}
 
         void config_args(int _argc, char** _argv, char** _env) {
             argc = _argc; argv = _argv; env = _env;
@@ -118,9 +153,10 @@ template <class D> class Test {
             return dut->get_time();
         }
 
-        int run_test(int test_id, int verbosity, int iterations) {
-            std::cout << name << " Starting Test #" << test_id << "\n";
-            std::string dummy;
+        int run_test(int test_id, int iterations) {
+            char buffer[BUFFER_SIZE];
+            printf("\n ============================        STARTING        ============================ \n");
+            printf("TestName: %s\nTestId: %d\nSeed: %d\n", name, test_id, seed);
 
             // Verilator init
             if (0 && argc && argv && env) {}
@@ -128,20 +164,19 @@ template <class D> class Test {
             Verilated::randReset(5); // randomly init all registers
             Verilated::commandArgs(argc, argv);
 
-            dut = new D{name, test_id};
-
+            dut = new D{name, test_id, verbosity}; 
             // Trace 
 #if VM_TRACE
             const char* flag = Verilated::commandArgsPlusMatch("trace");
             if (flag && 0==strcmp(flag, "+trace")) {
                 Verilated::traceEverOn(true);  // Verilator must compute traced signals
-                std::cout << "Enabling waves into waves/" << name << ".vcd...\n";
                 tfp = new VerilatedVcdC;
-                dut->vdut()->trace(tfp, 99);  // Trace 99 levels of hierarchy
+                dut->vdut()->trace(tfp, 99);   // Trace 99 levels of hierarchy
                 dut->set_tfp(tfp);
                 Verilated::mkdir("logs");
-                dummy = "waves/" + name + ".vcd";
-                tfp->open(&dummy[0]);  // Open the dump file
+                sprintf(buffer, "waves/%s.vcd", name);
+                printf("Writing waves to %s...\n", buffer);
+                tfp->open(buffer); 
             }
 #endif
 
@@ -149,21 +184,22 @@ template <class D> class Test {
             dut->reset();
 
             // Configure Dut
-            std::cout << name << " Test #" << test_id << " Configuring... \n";
             int temp;
             temp = configure(config, config_len);
-            printf("finsihed config %ld", get_time());
-            if (temp != 0)
-                std::cout << name << " Test #" << test_id << " FAILED::Invalid Configuration (" << temp << ")\n";
-            else if (verbosity >= 200) print_config();
+            if (temp != 0) {
+                printf("Configuration Failed. Exiting...\n");
+                exit(temp);
+            } else if (verbosity >= 100) {
+                printf("\n ============================         CONFIG         ============================ \n");
+                print_config();
+            }
 
             // Run Test
-            int errors = test_main(test_id, verbosity, iterations);
-            std::cout << name << " Test #" << test_id << " Finished\n";
-            if (errors == 0)
-                std::cout << name << " Test #" << test_id << " PASS\n";
-            else
-                std::cout << name << " Test #" << test_id << " FAIL " << errors << "/" << iterations << "\n";
+            printf("\n ============================      RUNNING TEST      ============================ \n");
+            int errors = test_main(test_id, iterations);
+            printf(" ============================      TEST COMPLETE     ============================ \n");
+            if (errors == 0) info("PASS");
+            else info("FAILED: %d/%d\n", errors, iterations);
 
             // Cleanup
             if (tfp) tfp->dump(get_time());
@@ -173,13 +209,14 @@ template <class D> class Test {
             // Logs
 #if VM_COVERAGE
             Verilated::mkdir("logs");
-            dummy = "logs/" + name + "_coverage.dat";
-            VerilatedCov::write(&dummy[0]);
+            sprintf(buffer, "logs/%s_coverage.dat", name);
+            VerilatedCov::write(buffer);
 #endif
 
             // Final cleanup
             delete dut; dut = NULL;
-            return 1;
+            printf("\n");
+            return errors == 0 ? 0 : 1;
         }
 
         virtual int configure(int *cfg, int cfg_len) {
@@ -188,20 +225,18 @@ template <class D> class Test {
 
     protected : 
         D *dut;
-        std::string name;
         VerilatedVcdC *tfp = NULL;
-        int test_id;
 
         int argc;
         char **argv;
         char **env;
         int *config;
         int config_len;
+        int seed;
         
-        virtual int test_main(int test_id, int verbosity, int iterations) = 0;
+        virtual int test_main(int test_id, int iterations) = 0;
         virtual void print_config() {
-            for (int i=0; i<config_len; ++i)
-                printf("config[%d] = 0x%x\n", i, config[i]);
+            for (int i=0; i<config_len; ++i) info("config[%d] = 0x%x\n", i, config[i]);
         }
 
         void tfp_dump() {
