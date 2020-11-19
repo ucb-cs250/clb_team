@@ -165,6 +165,7 @@ template <class D> class Test : public Object {
             Verilated::commandArgs(argc, argv);
 
             dut = new D{name, test_id, verbosity}; 
+
             // Trace 
 #if VM_TRACE
             const char* flag = Verilated::commandArgsPlusMatch("trace");

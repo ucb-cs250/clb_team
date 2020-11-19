@@ -35,9 +35,9 @@ wire [NUM_LUTS-1:0] cc_g;
 wire [NUM_LUTS-1:0] cc_s;
 
 reg use_cc; // shouldn't interlutmuxconfig also get saved here.
-always @(posedge cclk) begin
+always @(cclk) begin
     if (cen) begin
-        use_cc <= config_use_cc;
+        use_cc = config_use_cc;
     end
 end
              
