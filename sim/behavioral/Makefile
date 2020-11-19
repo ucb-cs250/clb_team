@@ -103,6 +103,16 @@ run:
 	@echo "To see waveforms, open waves/$*.vcd in a waveform viewer"
 	@echo
 
+slicel_directed.vcd : slicel_directed.cpp
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_DIRS) -f input.vc $(HDL_ROOT)/slicel.v slicel_directed.cpp
+	$(MAKE) -j 4 -C obj_dir -f Vslicel.mk
+	@rm -rf logs
+	@mkdir -p logs
+	@mkdir -p waves
+	obj_dir/Vslicel +trace
+	@rm -rf logs/annotated
+	@echo "To see waveforms, open waves/slicel_directed.vcd in a waveform viewer"
+
 ######################################################################
 # Other targets
 

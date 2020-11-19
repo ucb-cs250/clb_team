@@ -153,7 +153,7 @@ template <class D> class Test : public Object {
             return dut->get_time();
         }
 
-        int run_test(int test_id, int iterations) {
+        int initialize() {
             char buffer[BUFFER_SIZE];
             printf("\n ============================        STARTING        ============================ \n");
             printf("TestName: %s\nTestId: %d\nSeed: %d\n", name, test_id, seed);
@@ -182,6 +182,13 @@ template <class D> class Test : public Object {
 
             // Reset Dut
             dut->reset();
+            return 0;
+        }
+
+        int run_test(int test_id, int iterations) {
+            char buffer[BUFFER_SIZE];
+            
+            initialize();
 
             // Configure Dut
             int temp;
