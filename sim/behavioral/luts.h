@@ -88,14 +88,15 @@ template <class D> class Dut : public Object {
         void ticktock() {tick(); tock();}
 
         int configure(int *config, int len) {
-            dut->cclk = 0; 
-            eval();
+            //dut->clk = 0; 
+            //eval();
             for (int i=0; i<len; ++i)
                 dut->config_in[i] = config[i];
-            dut->cen = 1;
-            dut->cclk = 1; 
-            eval();
-            dut->cclk = 0;
+            //dut->clk = 1;
+            dut->comb_set = 1; 
+            tick();
+            dut->comb_set = 0; 
+            tock();
             return 0;
         }
 

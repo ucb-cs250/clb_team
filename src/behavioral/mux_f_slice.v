@@ -50,7 +50,7 @@ endgenerate
 
 always @(posedge clk) begin
     if (comb_set) begin
-        config_state = config_in;
+        config_state <= config_in;
     end
 end
 

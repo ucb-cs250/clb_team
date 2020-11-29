@@ -20,7 +20,10 @@ class SliceDut : public luts::Dut<Vslicel> {
         SliceDut(int verbosity) : Dut("Slicel Dut Standalone", 0, verbosity) {}
 
         int configure(int *config, int len) {
-            dut->cclk = 0; ticktock(); //eval();
+            //dut->cclk = 0; ticktock(); //eval();
+            dut->comb_set = 0;
+            dut->mem_set  = 0; 
+            ticktock();
 
             dut->luts_config_in[0] = config[0];
             dut->luts_config_in[1] = config[1];
@@ -32,10 +35,14 @@ class SliceDut : public luts::Dut<Vslicel> {
             dut->config_use_cc        = (config[4] >> 6) & 1;
             dut->regs_config_in       = (config[4] >> 7) & 0xFF; 
 
-            dut->cen = 1;
-            dut->cclk = 1; ticktock(); //eval();
-            dut->cen = 0;
-            dut->cclk = 0; ticktock();
+            dut->comb_set = 1;
+            dut->mem_set  = 1; 
+            tick();
+            //dut->cclk = 1; ticktock(); //eval();
+            dut->comb_set = 0;
+            dut->mem_set  = 0; 
+            tock();
+            //dut->cclk = 0; ticktock();
             return 0;
         }
         

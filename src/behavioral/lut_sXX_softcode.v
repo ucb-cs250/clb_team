@@ -22,7 +22,7 @@ assign out = {out_upper, out_lower}; // had to split out because of verilator's 
 
 always @(posedge clk) begin
     if (comb_set) begin
-        split = config_in[2*MEM_SIZE];
+        split <= config_in[2*MEM_SIZE];
     end
 end
 

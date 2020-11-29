@@ -50,7 +50,7 @@ wire [NUM_LUTS-1:0] cc_s;
 reg use_cc;
 always @(posedge clk) begin
     if (comb_set) begin
-        use_cc = config_use_cc;
+        use_cc <= config_use_cc;
     end
 end
              

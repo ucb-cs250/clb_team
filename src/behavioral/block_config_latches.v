@@ -22,7 +22,7 @@ assign out = mem[addr];
 // Block Style Configuration Logic
 always @(posedge clk) begin
     if (comb_set) begin
-        mem = config_in;
+        mem <= config_in;
     end
 end
 
