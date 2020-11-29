@@ -11,16 +11,16 @@ module lut #(
     output out,
 
     // Block Style Configuration
-    input cclk,
-    input cen,
+    input clk,
+    input comb_set,
     input [MEM_SIZE-1:0] config_in
 );
 
 block_config_latches #(.ADDR_BITS(INPUTS)) latches0 (
     .addr(addr), 
     .out(out),
-    .cclk(cclk),
-    .cen(cen),
+    .clk(clk),
+    .comb_set(comb_set),
     .config_in(config_in)
 );
 

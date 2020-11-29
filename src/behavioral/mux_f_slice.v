@@ -9,8 +9,8 @@ module mux_f_slice #(
     output [NUM_LUTS-1:0] out,
 
     // Block Style Configuration
-    input cclk,
-    input cen,
+    input clk,
+    input comb_set,
     input [MUX_LEVEL-1:0] config_in
 );
 
@@ -31,8 +31,8 @@ generate
             .luts_out(luts_out[HALF_LUTS-1:0]),
             .addr(addr[MUX_LEVEL-2:0]),
             .out(intermediate_out[HALF_LUTS-1:0]),
-            .cclk(cclk),
-            .cen(cen),
+            .clk(clk),
+            .comb_set(comb_set),
             .config_in(config_in[MUX_LEVEL-2:0])
         );
         mux_f_slice #(
@@ -41,15 +41,15 @@ generate
             .luts_out(luts_out[NUM_LUTS-1:HALF_LUTS]),
             .addr(addr[MUX_LEVEL-2:0]),
             .out(intermediate_out[NUM_LUTS-1:HALF_LUTS]),
-            .cclk(cclk),
-            .cen(cen),
+            .clk(clk),
+            .comb_set(comb_set),
             .config_in(config_in[MUX_LEVEL-2:0])
         );
     end
 endgenerate
 
-always @(cclk) begin
-    if (cen) begin
+always @(posedge clk) begin
+    if (comb_set) begin
         config_state = config_in;
     end
 end

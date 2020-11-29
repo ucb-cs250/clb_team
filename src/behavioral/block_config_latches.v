@@ -11,8 +11,8 @@ module block_config_latches #(
     output out,
 
     // Block Style Configuration
-    input cclk,
-    input cen,
+    input clk,
+    input comb_set,
     input [MEM_SIZE-1:0] config_in
 );
 
@@ -20,8 +20,8 @@ reg [MEM_SIZE-1:0] mem = 0;
 assign out = mem[addr];
 
 // Block Style Configuration Logic
-always @(cclk) begin
-    if (cen) begin
+always @(posedge clk) begin
+    if (comb_set) begin
         mem = config_in;
     end
 end

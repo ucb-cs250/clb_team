@@ -10,8 +10,8 @@ module lut_sXX_softcode #(
     // Block Style Configuration
     // NOTE: MOST SIGNIFICANT BIT OF CFG DETERMINES FRACTURING
     // config_in = {use_fracture, first_lut, second_lut}
-    input cclk,
-    input cen,
+    input clk,
+    input comb_set,
     input [2*MEM_SIZE:0] config_in
 );
 
@@ -20,8 +20,8 @@ reg split = 1'b0;
 assign second_in = split ? addr[INPUTS-1] : out_upper;
 assign out = {out_upper, out_lower}; // had to split out because of verilator's optimization strategy giving unoptflat errors
 
-always @(cclk) begin
-    if (cen) begin
+always @(posedge clk) begin
+    if (comb_set) begin
         split = config_in[2*MEM_SIZE];
     end
 end
@@ -29,16 +29,16 @@ end
 lut #(.INPUTS(INPUTS)) first_lut (
     .addr(addr[INPUTS*2-1:INPUTS]),
     .out(out_upper),
-    .cclk(cclk),
-    .cen(cen),
+    .clk(clk),
+    .comb_set(comb_set),
     .config_in(config_in[2*MEM_SIZE-1:MEM_SIZE])
 );
 
 lut #(.INPUTS(INPUTS)) second_lut (
     .addr({second_in, addr[INPUTS-2:0]}),
     .out(out_lower),
-    .cclk(cclk),
-    .cen(cen),
+    .clk(clk),
+    .comb_set(comb_set),
     .config_in(config_in[MEM_SIZE-1:0])
 );
 

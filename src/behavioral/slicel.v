@@ -8,22 +8,35 @@ module slicel #(
     // assume NUM_LUTS is a power of 2
     parameter MUX_LVLS = $clog2(NUM_LUTS)
 ) (
+    input clk,
+    // Set config bits for comb logic
+    input comb_set,
+    // Set register initial states
+    input mem_set,
+
+    // Input to LUTS (from fabric)
     input [2*S_XX_BASE*NUM_LUTS-1:0] luts_in,
+    // Input to MUXS (from fabric)
     input [MUX_LVLS-1:0] higher_order_addr,
-    // CONFIG
+
+    // Config bits
     input [CFG_SIZE*NUM_LUTS-1:0] luts_config_in,
     input [MUX_LVLS-1:0] inter_lut_mux_config,
-    input config_use_cc,
+    // Output register initial state
     input [2*NUM_LUTS-1:0] regs_config_in,
+    // Enable Carry
+    input config_use_cc,
 
-    // 
-    input cclk,
-    input clk,
+    // Output Register Write Enable (from fabric)
     input reg_ce,
-    input cen,
+    // Carry in (from fabric)
     input Ci,
+    // Carry out (to fabric)
     output Co,
+
+    // Unregistered output (to fabric)
     output [2*NUM_LUTS-1:0] out,
+    // Unregistered output (to fabric)
     output reg [2*NUM_LUTS-1:0] sync_out
 );
 
@@ -34,9 +47,9 @@ wire [NUM_LUTS-1:0] cc_p;
 wire [NUM_LUTS-1:0] cc_g;
 wire [NUM_LUTS-1:0] cc_s;
 
-reg use_cc; // shouldn't interlutmuxconfig also get saved here.
-always @(cclk) begin
-    if (cen) begin
+reg use_cc;
+always @(posedge clk) begin
+    if (comb_set) begin
         use_cc = config_use_cc;
     end
 end
@@ -48,8 +61,8 @@ generate
         lut_sXX_softcode #(.INPUTS(S_XX_BASE)) lut (
             .addr(luts_in[2*S_XX_BASE*(i+1)-1:2*S_XX_BASE*i]),
             .out(luts_out[2*i+1:2*i]),
-            .cclk(cclk),
-            .cen(cen),
+            .clk(clk),
+            .comb_set(comb_set),
             .config_in(luts_config_in[CFG_SIZE*(i+1)-1:CFG_SIZE*i])
         );
 
@@ -62,7 +75,7 @@ generate
 
         // Registers capture main CLB outputs
         always @(posedge clk) begin
-            if (cen) begin
+            if (mem_set) begin
                 // set the initial states of the FFs from the configuration bits
                 sync_out[2*i+1:2*i] <= regs_config_in[2*i+1:2*i];
             end
@@ -90,8 +103,8 @@ mux_f_slice #(
     .luts_out(muxes_in),
     .addr(higher_order_addr),
     .out(muxes_out),
-    .cclk(cclk),
-    .cen(cen),
+    .clk(clk),
+    .comb_set(comb_set),
     .config_in(inter_lut_mux_config)
 );
 
