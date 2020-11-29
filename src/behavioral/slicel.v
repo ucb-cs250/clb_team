@@ -36,7 +36,7 @@ module slicel #(
 
     // Unregistered output (to fabric)
     output [2*NUM_LUTS-1:0] out,
-    // Unregistered output (to fabric)
+    // Registered output (to fabric)
     output reg [2*NUM_LUTS-1:0] sync_out
 );
 
