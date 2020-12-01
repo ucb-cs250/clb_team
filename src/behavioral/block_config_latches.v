@@ -20,7 +20,7 @@ reg [MEM_SIZE-1:0] mem = 0;
 assign out = mem[addr];
 
 // Block Style Configuration Logic
-always @(posedge clk) begin
+always @(clk) begin
     if (comb_set) begin
         mem <= config_in;
     end
