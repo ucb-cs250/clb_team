@@ -28,13 +28,13 @@ generate
             assign intermediate_out[i] = mem[{addr[ADDR_BITS-1:ADDR_BITS-2], {(ADDR_BITS-2){1'b0}}}];
             transmission_gate tg(intermediate_out[i], out, intermediate_use[i]);
             if (i==0) 
-                assign intermediate_use = ~addr[1] & ~addr[0];
+                assign intermediate_use[i] = ~addr[1] & ~addr[0];
             else if (i==1) 
-                assign intermediate_use = ~addr[1] & addr[0];
+                assign intermediate_use[i] = ~addr[1] & addr[0];
             else if (i==2) 
-                assign intermediate_use = addr[1] & ~addr[0];
+                assign intermediate_use[i] = addr[1] & ~addr[0];
             else 
-                assign intermediate_use = addr[1] & addr[0];
+                assign intermediate_use[i] = addr[1] & addr[0];
         end
     end
     else begin
