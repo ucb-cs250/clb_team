@@ -59,7 +59,7 @@ void test_slicel_crand(int argc, char** argv, char** env, int mode, int seed, in
 int main(int argc, char** argv, char** env) {
     // TEST EXAMPLE                       mode, seed, cfgs, iter, verb
   //test_slicel_directed(argc, argv, env, RAND, 145 ,       200 , 100 ); // Directed Test
-    test_slicel_crand   (argc, argv, env, RAND, 145 , 200 ,  50 , 100 ); // Constrained Random Test
+    test_slicel_crand   (argc, argv, env, RAND, 145 ,  10 , 100 , 100 ); // Constrained Random Test
 
     exit(0);
 }
