@@ -1,0 +1,40 @@
+* SPICE3 file created from mux4.ext - technology: sky130A
+
+.option scale=10000u
+
+M1000 A4 S1 a_335_75# $SUB nshort w=40 l=15
++  ad=1360 pd=148 as=2960 ps=308
+M1001 a_165_75# a_485_206# a_500_75# $SUB nshort w=40 l=15
++  ad=2960 pd=308 as=1600 ps=160
+M1002 GND S2 a_485_206# $SUB nshort w=40 l=15
++  ad=2960 pd=308 as=1360 ps=148
+M1003 A2 a_50_50# a_165_75# w_n17_185# pshort w=50 l=15
++  ad=1700 pd=168 as=3399 ps=358
+M1004 a_165_75# a_50_50# A1 $SUB nshort w=40 l=15
++  ad=0 pd=0 as=1360 ps=148
+M1005 a_50_50# S1 VDD w_n17_185# pshort w=40 l=15
++  ad=1360 pd=148 as=2960 ps=308
+M1006 X a_500_75# VDD w_n17_185# pshort w=40 l=15
++  ad=1360 pd=148 as=0 ps=0
+M1007 a_500_75# a_485_206# a_335_75# w_n17_185# pshort w=50 l=15
++  ad=2039 pd=210 as=3739 ps=378
+M1008 a_165_75# S1 A1 w_n17_185# pshort w=40 l=15
++  ad=0 pd=0 as=1360 ps=148
+M1009 a_165_75# S2 a_500_75# w_n17_185# pshort w=40 l=15
++  ad=0 pd=0 as=0 ps=0
+M1010 X a_500_75# GND $SUB nshort w=40 l=15
++  ad=1360 pd=148 as=0 ps=0
+M1011 a_50_50# S1 GND $SUB nshort w=40 l=15
++  ad=1360 pd=148 as=0 ps=0
+M1012 A4 a_50_50# a_335_75# w_n17_185# pshort w=50 l=15
++  ad=1700 pd=168 as=0 ps=0
+M1013 a_335_75# S1 A3 w_n17_185# pshort w=40 l=15
++  ad=0 pd=0 as=1360 ps=148
+M1014 a_500_75# S2 a_335_75# $SUB nshort w=40 l=15
++  ad=0 pd=0 as=0 ps=0
+M1015 a_335_75# a_50_50# A3 $SUB nshort w=40 l=15
++  ad=0 pd=0 as=1360 ps=148
+M1016 VDD S2 a_485_206# w_n17_185# pshort w=40 l=15
++  ad=0 pd=0 as=1360 ps=148
+M1017 A2 S1 a_165_75# $SUB nshort w=40 l=15
++  ad=1360 pd=148 as=0 ps=0
