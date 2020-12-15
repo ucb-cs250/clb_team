@@ -11,7 +11,14 @@ wire [WIDTH-1:0] select;
 generate
 genvar i;
 for (i=0; i<WIDTH; i=i+1) begin
-    assign select[i] = addr == i;
+    if (i==0) 
+        assign intermediate_use[i] = ~addr[1] & ~addr[0];
+    else if (i==1) 
+        assign intermediate_use[i] = ~addr[1] & addr[0];
+    else if (i==2) 
+        assign intermediate_use[i] = addr[1] & ~addr[0];
+    else 
+        assign intermediate_use[i] = addr[1] & addr[0];
     transmission_gate tg (data[i], out, select[i]);
 end
 endgenerate

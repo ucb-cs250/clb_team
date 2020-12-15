@@ -18,14 +18,25 @@ module block_config_latches #(
 );
 
 reg [MEM_SIZE-1:0] mem = 0;
+wire invout;
+assign out = ~invout;
 
 generate
     if (PREDEC==1) begin
         wire [3:0] intermediate_out; // 4 muxes -> 1 predecoded mux
         genvar i;
-        for (i = 0; i < MEM_SIZE/4; i=i+1)
-            mux m4(mem[4*i+3:4*i], intermediate_out[i], addr[1:0]);
-        mux_predecoded mp4 (intermediate_out, out, addr[3:2]);
+        for (i = 0; i < MEM_SIZE/4; i=i+1) begin
+            mux_kareem impl(mem[4*i+3:4*i], intermediate_out[i], addr[1:0]);
+            transmission_gate tg(intermediate_out[i], invout, intermediate_use[i]);
+            if (i==0)
+                assign intermediate_use[i] = ~addr[1] & ~addr[0];
+            else if (i==1) 
+                assign intermediate_use[i] = ~addr[1] & addr[0];
+            else if (i==2) 
+                assign intermediate_use[i] = addr[1] & ~addr[0];
+            else 
+                assign intermediate_use[i] = addr[1] & addr[0];
+        end
     end
     else begin
         assign out = mem[addr];
