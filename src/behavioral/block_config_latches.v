@@ -24,6 +24,7 @@ assign out = ~invout;
 generate
     if (PREDEC==1) begin
         wire [3:0] intermediate_out; // 4 muxes -> 1 predecoded mux
+        wire [3:0] intermediate_use;
         genvar i;
         for (i = 0; i < MEM_SIZE/4; i=i+1) begin
             mux_kareem impl(mem[4*i+3:4*i], intermediate_out[i], addr[1:0]);
