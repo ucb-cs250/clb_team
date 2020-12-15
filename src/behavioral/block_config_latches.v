@@ -25,7 +25,17 @@ generate
         wire [3:0] intermediate_use;
         genvar i;
         for (i = 0; i < MEM_SIZE/4; i=i+1) begin
-            mux impl(mem[4*i+3:4*i], intermediate_out[i], addr[1:0]);
+            // Why won't this map as a 4-mux?
+            //assign intermediate_out[i] = mem[4*i+addr[1:0]];
+            sky130_fd_sc_hd__mux4_1 _TECHMAP_MUX4 (
+                .X(intermediate_out[i]),
+                .A0(mem[4*i]),
+                .A1(mem[4*i + 1]),
+                .A2(mem[4*i + 2]),
+                .A3(mem[4*i + 3]),
+                .S0(addr[0]),
+                .S1(addr[1])
+            );
             transmission_gate tg(intermediate_out[i], out, intermediate_use[i]);
             if (i==0)
                 assign intermediate_use[i] = ~addr[ADDR_BITS-1] & ~addr[ADDR_BITS-2];

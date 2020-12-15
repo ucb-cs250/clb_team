@@ -59,7 +59,7 @@ if { [file exists $filename] == 1} {
 set ::env(MACRO_PLACEMENT_CFG) $::env(DESIGN_DIR)/macro_placement.cfg
 
 # Synthesis config
-set ::env(SYNTH_STRATEGY) 1;
+set ::env(SYNTH_STRATEGY) 3;
 
 set ::env(USE_ARC_ANTENNA_CHECK) 0
 
