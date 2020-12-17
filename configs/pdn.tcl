@@ -14,6 +14,15 @@ pdngen::specify_grid stdcell {
   connect {{met1 met4}}
 }
 
+pdngen::specify_grid macro {
+  macro transmission_gate_cell
+  power_pins ""
+  ground_pins ""
+  blockages "li1 met1"
+  straps {
+  }
+}
+
 set ::halo 0
 
 # Metal layer for rails on every row
